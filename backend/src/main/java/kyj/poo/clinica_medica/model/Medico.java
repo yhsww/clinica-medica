@@ -35,10 +35,9 @@ public class Medico extends Usuario {
     public Medico(
             String nome,
             String email,
-            String senha,
             Especialidade especialidade,
             BigDecimal valorConsultaParticular) {
-        super(nome, email, senha);
+        super(nome, email);
         this.especialidade = especialidade;
         this.valorConsultaParticular = valorConsultaParticular;
     }

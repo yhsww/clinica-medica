@@ -14,7 +14,9 @@ public class CredencialService {
     private final CredencialRepository repository;
     private final PasswordEncoder passwordEncoder;
 
-    public CredencialService(CredencialRepository repository, PasswordEncoder passwordEncoder) {
+    public CredencialService(
+            CredencialRepository repository,
+            PasswordEncoder passwordEncoder) {
 
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
@@ -24,6 +26,10 @@ public class CredencialService {
 
         if (usuario == null) {
             throw new IllegalArgumentException("Usuário não pode ser nulo.");
+        }
+
+        if (usuario.getEmail() == null || usuario.getEmail().isBlank()) {
+            throw new IllegalArgumentException("E-mail do usuário não pode ser vazio.");
         }
 
         if (senha == null || senha.isBlank()) {
@@ -40,12 +46,17 @@ public class CredencialService {
 
         String senhaCriptografada = passwordEncoder.encode(senha);
 
-        Credencial credencial = new Credencial(usuario, senhaCriptografada, papel);
+        Credencial credencial =
+                new Credencial(usuario, senhaCriptografada, papel);
 
         return repository.save(credencial);
     }
 
     public Credencial buscarPorEmail(String email) {
+
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("E-mail não pode ser vazio.");
+        }
 
         return repository
                 .findByUsuario_Email(email)
@@ -56,6 +67,14 @@ public class CredencialService {
     }
 
     public boolean autenticar(String email, String senha) {
+
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("E-mail não pode ser vazio.");
+        }
+
+        if (senha == null || senha.isBlank()) {
+            throw new IllegalArgumentException("Senha não pode ser vazia.");
+        }
 
         Credencial credencial = buscarPorEmail(email);
 

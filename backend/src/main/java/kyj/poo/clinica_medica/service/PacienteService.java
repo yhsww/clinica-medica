@@ -16,7 +16,6 @@ public class PacienteService {
     private final PacienteRepository pacienteRepository;
 
     public PacienteService(PacienteRepository pacienteRepository) {
-
         this.pacienteRepository = pacienteRepository;
     }
 
@@ -51,7 +50,6 @@ public class PacienteService {
     }
 
     public List<Paciente> listarTodos() {
-
         return pacienteRepository.findAll();
     }
 
@@ -68,24 +66,20 @@ public class PacienteService {
     public Paciente atualizar(Paciente paciente) {
 
         if (paciente == null || paciente.getId() == null) {
-
             throw new IllegalArgumentException("Paciente inválido para atualização.");
         }
 
         Paciente existente = buscarPorId(paciente.getId());
 
         if (paciente.getNome() == null || paciente.getNome().isBlank()) {
-
             throw new IllegalArgumentException("O nome do paciente é obrigatório.");
         }
 
         if (paciente.getEmail() == null || paciente.getEmail().isBlank()) {
-
             throw new IllegalArgumentException("O e-mail do paciente é obrigatório.");
         }
 
         if (paciente.getIdade() == null || paciente.getIdade() <= 0) {
-
             throw new IllegalArgumentException("A idade do paciente deve ser válida.");
         }
 
@@ -104,22 +98,14 @@ public class PacienteService {
         }
 
         if (paciente.getNome() == null || paciente.getNome().isBlank()) {
-
             throw new IllegalArgumentException("O nome do paciente é obrigatório.");
         }
 
         if (paciente.getEmail() == null || paciente.getEmail().isBlank()) {
-
             throw new IllegalArgumentException("O e-mail do paciente é obrigatório.");
         }
 
-        if (paciente.getSenha() == null || paciente.getSenha().isBlank()) {
-
-            throw new IllegalArgumentException("A senha do paciente é obrigatória.");
-        }
-
         if (paciente.getIdade() == null || paciente.getIdade() <= 0) {
-
             throw new IllegalArgumentException("A idade do paciente deve ser válida.");
         }
     }

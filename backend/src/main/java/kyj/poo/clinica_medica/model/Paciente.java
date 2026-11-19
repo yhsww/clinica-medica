@@ -22,8 +22,8 @@ public class Paciente extends Usuario {
     @OneToMany(mappedBy = "paciente")
     private List<Consulta> consultas = new ArrayList<>();
 
-    public Paciente(String nome, String email, String senha, Integer idade, Plano planoSaude) {
-        super(nome, email, senha);
+    public Paciente(String nome, String email, Integer idade, Plano planoSaude) {
+        super(nome, email);
         this.idade = idade;
         this.planoSaude = planoSaude;
     }
