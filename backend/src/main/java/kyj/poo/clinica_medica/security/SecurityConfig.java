@@ -24,41 +24,24 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
-                .userDetailsService(userDetailsService)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/login",
-                                "/css/**",
-                                "/js/**"
-                        ).permitAll()
-
-                        .requestMatchers("/admin/**")
-                        .hasRole("ADMIN")
-
-                        .requestMatchers("/medico/**")
-                        .hasRole("MEDICO")
-
-                        .requestMatchers("/paciente/**")
-                        .hasRole("PACIENTE")
-
-                        .anyRequest()
-                        .authenticated()
-                )
-
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .defaultSuccessUrl("/", true)
-                        .permitAll()
-                )
-
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/login?logout")
-                        .permitAll()
-                );
+        http.userDetailsService(userDetailsService)
+                .authorizeHttpRequests(
+                        auth ->
+                                auth.requestMatchers("/login", "/css/**", "/js/**")
+                                        .permitAll()
+                                        .requestMatchers("/admin/**")
+                                        .hasRole("ADMIN")
+                                        .requestMatchers("/medico/**")
+                                        .hasRole("MEDICO")
+                                        .requestMatchers("/paciente/**")
+                                        .hasRole("PACIENTE")
+                                        .anyRequest()
+                                        .authenticated())
+                .formLogin(
+                        form -> form.loginPage("/login").defaultSuccessUrl("/", true).permitAll())
+                .logout(logout -> logout.logoutSuccessUrl("/login?logout").permitAll());
 
         return http.build();
     }

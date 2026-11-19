@@ -1,6 +1,7 @@
 package kyj.poo.clinica_medica.repository;
 
 import kyj.poo.clinica_medica.model.Credencial;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
