@@ -2,6 +2,7 @@ package kyj.poo.clinica_medica.service;
 
 import kyj.poo.clinica_medica.exception.OperacaoInvalidaException;
 import kyj.poo.clinica_medica.model.Consulta;
+import kyj.poo.clinica_medica.model.EstadoDaConsulta;
 import kyj.poo.clinica_medica.model.ListaDeEspera;
 import kyj.poo.clinica_medica.model.Medico;
 import kyj.poo.clinica_medica.model.Notificacao;
@@ -84,37 +85,74 @@ public class ListaDeEsperaService {
     @Transactional
     public Consulta promoverPrimeiroDaFila(Medico medico, LocalDate data) {
 
-        ListaDeEspera entrada = primeiroDaFila(medico, data);
-
-        if (entrada == null) {
-            return null;
+        if (medico == null) {
+            throw new IllegalArgumentException("O médico é obrigatório.");
         }
 
-        Paciente paciente = entrada.getPaciente();
+        if (data == null) {
+            throw new IllegalArgumentException("A data da consulta é obrigatória.");
+        }
 
-        BigDecimal valor = calcularValorConsulta(medico, paciente);
+        if (medico.getEspecialidade() == null) {
+            throw new IllegalArgumentException("O médico precisa possuir uma especialidade.");
+        }
 
-        Consulta consulta = new Consulta(medico, paciente, data, valor);
+        while (true) {
+            ListaDeEspera entrada = primeiroDaFila(medico, data);
 
-        Consulta consultaSalva = consultaRepository.save(consulta);
+            if (entrada == null) {
+                return null;
+            }
 
-        Notificacao notificacao =
-                new Notificacao(
-                        paciente,
-                        "Você foi promovido da lista de espera. "
-                                + "Sua consulta com o médico "
-                                + medico.getNome()
-                                + " foi agendada para "
-                                + data
-                                + ".");
+            long consultasAtivas =
+                    consultaRepository.findByMedicoAndData(medico, data).stream()
+                            .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.AGENDADA)
+                            .count();
 
-        notificacaoRepository.save(notificacao);
+            if (consultasAtivas >= medico.getEspecialidade().getLimiteConsultasPorDia()) {
+                return null;
+            }
 
-        listaDeEsperaRepository.delete(entrada);
+            Paciente paciente = entrada.getPaciente();
 
-        reorganizarFila(medico, data);
+            boolean jaPossuiConsulta =
+                    consultaRepository
+                            .findByMedicoAndPacienteAndData(medico, paciente, data)
+                            .filter(
+                                    consulta ->
+                                            consulta.getEstado()
+                                                    == kyj.poo.clinica_medica.model.EstadoDaConsulta
+                                                            .AGENDADA)
+                            .isPresent();
 
-        return consultaSalva;
+            if (jaPossuiConsulta) {
+                listaDeEsperaRepository.delete(entrada);
+                reorganizarFila(medico, data);
+                continue;
+            }
+
+            BigDecimal valor = calcularValorConsulta(medico, paciente);
+
+            Consulta consulta = new Consulta(medico, paciente, data, valor);
+            Consulta consultaSalva = consultaRepository.save(consulta);
+
+            Notificacao notificacao =
+                    new Notificacao(
+                            paciente,
+                            "Você foi promovido da lista de espera. "
+                                    + "Sua consulta com o médico "
+                                    + medico.getNome()
+                                    + " foi agendada para "
+                                    + data
+                                    + ".");
+
+            notificacaoRepository.save(notificacao);
+
+            listaDeEsperaRepository.delete(entrada);
+            reorganizarFila(medico, data);
+
+            return consultaSalva;
+        }
     }
 
     /**

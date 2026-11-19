@@ -14,9 +14,7 @@ public class CredencialService {
     private final CredencialRepository repository;
     private final PasswordEncoder passwordEncoder;
 
-    public CredencialService(
-            CredencialRepository repository,
-            PasswordEncoder passwordEncoder) {
+    public CredencialService(CredencialRepository repository, PasswordEncoder passwordEncoder) {
 
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
@@ -46,8 +44,7 @@ public class CredencialService {
 
         String senhaCriptografada = passwordEncoder.encode(senha);
 
-        Credencial credencial =
-                new Credencial(usuario, senhaCriptografada, papel);
+        Credencial credencial = new Credencial(usuario, senhaCriptografada, papel);
 
         return repository.save(credencial);
     }
