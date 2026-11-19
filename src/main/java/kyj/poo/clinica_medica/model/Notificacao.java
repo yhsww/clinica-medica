@@ -1,10 +1,12 @@
 package kyj.poo.clinica_medica.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -12,22 +14,22 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Notificacao {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @ManyToOne private Paciente paciente;
+    @ManyToOne private Paciente paciente;
 
-  private String mensagem;
+    private String mensagem;
 
-  private LocalDateTime dataHora;
+    private LocalDateTime dataHora;
 
-  private boolean lida;
+    private boolean lida;
 
-  public Notificacao(Paciente paciente, String mensagem) {
-    this.paciente = paciente;
-    this.mensagem = mensagem;
-    this.dataHora = LocalDateTime.now();
-    this.lida = false;
-  }
+    public Notificacao(Paciente paciente, String mensagem) {
+        this.paciente = paciente;
+        this.mensagem = mensagem;
+        this.dataHora = LocalDateTime.now();
+        this.lida = false;
+    }
 }

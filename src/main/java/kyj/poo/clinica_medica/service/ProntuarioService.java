@@ -9,96 +9,104 @@ import kyj.poo.clinica_medica.model.Medico;
 import kyj.poo.clinica_medica.model.Paciente;
 import kyj.poo.clinica_medica.model.Prontuario;
 import kyj.poo.clinica_medica.repository.ProntuarioRepository;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProntuarioService {
 
-  private final ProntuarioRepository prontuarioRepository;
+    private final ProntuarioRepository prontuarioRepository;
 
-  public ProntuarioService(ProntuarioRepository prontuarioRepository) {
-    this.prontuarioRepository = prontuarioRepository;
-  }
-
-  @Transactional
-  public Prontuario criar(
-      Consulta consulta,
-      String sintomas,
-      String diagnostico,
-      String tratamento,
-      String medicamentos,
-      String exames,
-      String observacoes) {
-
-    if (consulta == null) {
-      throw new IllegalArgumentException("A consulta é obrigatória.");
+    public ProntuarioService(ProntuarioRepository prontuarioRepository) {
+        this.prontuarioRepository = prontuarioRepository;
     }
 
-    if (consulta.getEstado() != EstadoDaConsulta.REALIZADA) {
+    @Transactional
+    public Prontuario criar(
+            Consulta consulta,
+            String sintomas,
+            String diagnostico,
+            String tratamento,
+            String medicamentos,
+            String exames,
+            String observacoes) {
 
-      throw new OperacaoInvalidaException(
-          "O prontuário só pode ser registrado após a realização da consulta.");
+        if (consulta == null) {
+            throw new IllegalArgumentException("A consulta é obrigatória.");
+        }
+
+        if (consulta.getEstado() != EstadoDaConsulta.REALIZADA) {
+
+            throw new OperacaoInvalidaException(
+                    "O prontuário só pode ser registrado após a realização da consulta.");
+        }
+
+        if (prontuarioRepository.findByConsulta(consulta).isPresent()) {
+
+            throw new OperacaoInvalidaException("Esta consulta já possui um prontuário.");
+        }
+
+        Prontuario prontuario =
+                new Prontuario(
+                        consulta,
+                        sintomas,
+                        diagnostico,
+                        tratamento,
+                        medicamentos,
+                        exames,
+                        observacoes);
+
+        return prontuarioRepository.save(prontuario);
     }
 
-    if (prontuarioRepository.findByConsulta(consulta).isPresent()) {
+    public Prontuario buscarPorConsulta(Consulta consulta) {
 
-      throw new OperacaoInvalidaException("Esta consulta já possui um prontuário.");
+        if (consulta == null) {
+            throw new IllegalArgumentException("A consulta é obrigatória.");
+        }
+
+        return prontuarioRepository
+                .findByConsulta(consulta)
+                .orElseThrow(
+                        () ->
+                                new RecursoNaoEncontradoException(
+                                        "Prontuário não encontrado para esta consulta."));
     }
 
-    Prontuario prontuario =
-        new Prontuario(
-            consulta, sintomas, diagnostico, tratamento, medicamentos, exames, observacoes);
+    public Prontuario buscarParaPaciente(Consulta consulta, Paciente paciente) {
 
-    return prontuarioRepository.save(prontuario);
-  }
+        if (consulta == null || paciente == null) {
+            throw new IllegalArgumentException("A consulta e o paciente são obrigatórios.");
+        }
 
-  public Prontuario buscarPorConsulta(Consulta consulta) {
+        if (!consulta.getPaciente().equals(paciente)) {
+            throw new AcessoNegadoException("O paciente não possui acesso a este prontuário.");
+        }
 
-    if (consulta == null) {
-      throw new IllegalArgumentException("A consulta é obrigatória.");
+        return buscarPorConsulta(consulta);
     }
 
-    return prontuarioRepository
-        .findByConsulta(consulta)
-        .orElseThrow(
-            () ->
-                new RecursoNaoEncontradoException("Prontuário não encontrado para esta consulta."));
-  }
+    public Prontuario buscarParaMedico(Consulta consulta, Medico medico) {
 
-  public Prontuario buscarParaPaciente(Consulta consulta, Paciente paciente) {
+        if (consulta == null || medico == null) {
+            throw new IllegalArgumentException("A consulta e o médico são obrigatórios.");
+        }
 
-    if (consulta == null || paciente == null) {
-      throw new IllegalArgumentException("A consulta e o paciente são obrigatórios.");
+        if (!consulta.getMedico().equals(medico)) {
+            throw new AcessoNegadoException(
+                    "O médico não possui autorização para acessar este prontuário.");
+        }
+
+        return buscarPorConsulta(consulta);
     }
 
-    if (!consulta.getPaciente().equals(paciente)) {
-      throw new AcessoNegadoException("O paciente não possui acesso a este prontuário.");
+    public boolean existeParaConsulta(Consulta consulta) {
+
+        if (consulta == null) {
+            return false;
+        }
+
+        return prontuarioRepository.findByConsulta(consulta).isPresent();
     }
-
-    return buscarPorConsulta(consulta);
-  }
-
-  public Prontuario buscarParaMedico(Consulta consulta, Medico medico) {
-
-    if (consulta == null || medico == null) {
-      throw new IllegalArgumentException("A consulta e o médico são obrigatórios.");
-    }
-
-    if (!consulta.getMedico().equals(medico)) {
-      throw new AcessoNegadoException(
-          "O médico não possui autorização para acessar este prontuário.");
-    }
-
-    return buscarPorConsulta(consulta);
-  }
-
-  public boolean existeParaConsulta(Consulta consulta) {
-
-    if (consulta == null) {
-      return false;
-    }
-
-    return prontuarioRepository.findByConsulta(consulta).isPresent();
-  }
 }

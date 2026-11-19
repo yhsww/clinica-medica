@@ -1,10 +1,12 @@
 package kyj.poo.clinica_medica.model.especialidade;
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.math.BigDecimal;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -13,18 +15,18 @@ import lombok.Setter;
 @NoArgsConstructor
 public abstract class Especialidade {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(nullable = false, unique = true)
-  private String nome;
+    @Column(nullable = false, unique = true)
+    private String nome;
 
-  public Especialidade(String nome) {
-    this.nome = nome;
-  }
+    public Especialidade(String nome) {
+        this.nome = nome;
+    }
 
-  public abstract int getLimiteConsultasPorDia();
+    public abstract int getLimiteConsultasPorDia();
 
-  public abstract BigDecimal calcularValorConsulta(BigDecimal valorBase);
+    public abstract BigDecimal calcularValorConsulta(BigDecimal valorBase);
 }

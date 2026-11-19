@@ -1,10 +1,5 @@
 package kyj.poo.clinica_medica.service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import kyj.poo.clinica_medica.model.Avaliacao;
 import kyj.poo.clinica_medica.model.Consulta;
 import kyj.poo.clinica_medica.model.EstadoDaConsulta;
@@ -13,95 +8,107 @@ import kyj.poo.clinica_medica.model.especialidade.Especialidade;
 import kyj.poo.clinica_medica.repository.AvaliacaoRepository;
 import kyj.poo.clinica_medica.repository.ConsultaRepository;
 import kyj.poo.clinica_medica.repository.MedicoRepository;
+
 import org.springframework.stereotype.Service;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class EstatisticaService {
 
-  private final MedicoRepository medicoRepository;
-  private final ConsultaRepository consultaRepository;
-  private final AvaliacaoRepository avaliacaoRepository;
+    private final MedicoRepository medicoRepository;
+    private final ConsultaRepository consultaRepository;
+    private final AvaliacaoRepository avaliacaoRepository;
 
-  public EstatisticaService(
-      MedicoRepository medicoRepository,
-      ConsultaRepository consultaRepository,
-      AvaliacaoRepository avaliacaoRepository) {
+    public EstatisticaService(
+            MedicoRepository medicoRepository,
+            ConsultaRepository consultaRepository,
+            AvaliacaoRepository avaliacaoRepository) {
 
-    this.medicoRepository = medicoRepository;
-    this.consultaRepository = consultaRepository;
-    this.avaliacaoRepository = avaliacaoRepository;
-  }
-
-  public Optional<Medico> medicoMaisBemAvaliado() {
-
-    List<Medico> medicos = medicoRepository.findAll();
-
-    return medicos.stream()
-        .filter(medico -> !avaliacoesDoMedico(medico).isEmpty())
-        .max(Comparator.comparingDouble(this::calcularMediaDoMedico));
-  }
-
-  public double calcularMediaDoMedico(Medico medico) {
-
-    if (medico == null) {
-      throw new IllegalArgumentException("O médico é obrigatório.");
+        this.medicoRepository = medicoRepository;
+        this.consultaRepository = consultaRepository;
+        this.avaliacaoRepository = avaliacaoRepository;
     }
 
-    List<Avaliacao> avaliacoes = avaliacoesDoMedico(medico);
+    public Optional<Medico> medicoMaisBemAvaliado() {
 
-    if (avaliacoes.isEmpty()) {
-      return 0.0;
+        List<Medico> medicos = medicoRepository.findAll();
+
+        return medicos.stream()
+                .filter(medico -> !avaliacoesDoMedico(medico).isEmpty())
+                .max(Comparator.comparingDouble(this::calcularMediaDoMedico));
     }
 
-    return avaliacoes.stream().mapToInt(Avaliacao::getEstrelas).average().orElse(0.0);
-  }
+    public double calcularMediaDoMedico(Medico medico) {
 
-  public double mediaGeralAvaliacoes() {
+        if (medico == null) {
+            throw new IllegalArgumentException("O médico é obrigatório.");
+        }
 
-    List<Avaliacao> avaliacoes = avaliacaoRepository.findAll();
+        List<Avaliacao> avaliacoes = avaliacoesDoMedico(medico);
 
-    if (avaliacoes.isEmpty()) {
-      return 0.0;
+        if (avaliacoes.isEmpty()) {
+            return 0.0;
+        }
+
+        return avaliacoes.stream().mapToInt(Avaliacao::getEstrelas).average().orElse(0.0);
     }
 
-    return avaliacoes.stream().mapToInt(Avaliacao::getEstrelas).average().orElse(0.0);
-  }
+    public double mediaGeralAvaliacoes() {
 
-  public long totalConsultasRealizadas() {
+        List<Avaliacao> avaliacoes = avaliacaoRepository.findAll();
 
-    return consultaRepository.findAll().stream()
-        .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.REALIZADA)
-        .count();
-  }
+        if (avaliacoes.isEmpty()) {
+            return 0.0;
+        }
 
-  public Map<Medico, Long> consultasPorMedico() {
+        return avaliacoes.stream().mapToInt(Avaliacao::getEstrelas).average().orElse(0.0);
+    }
 
-    return consultaRepository.findAll().stream()
-        .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.REALIZADA)
-        .collect(Collectors.groupingBy(Consulta::getMedico, Collectors.counting()));
-  }
+    public long totalConsultasRealizadas() {
 
-  public Optional<Especialidade> especialidadeMaisProcurada() {
+        return consultaRepository.findAll().stream()
+                .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.REALIZADA)
+                .count();
+    }
 
-    Map<Especialidade, Long> quantidadePorEspecialidade =
-        consultaRepository.findAll().stream()
-            .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.REALIZADA)
-            .filter(
-                consulta ->
-                    consulta.getMedico() != null && consulta.getMedico().getEspecialidade() != null)
-            .collect(
-                Collectors.groupingBy(
-                    consulta -> consulta.getMedico().getEspecialidade(), Collectors.counting()));
+    public Map<Medico, Long> consultasPorMedico() {
 
-    return quantidadePorEspecialidade.entrySet().stream()
-        .max(Map.Entry.comparingByValue())
-        .map(Map.Entry::getKey);
-  }
+        return consultaRepository.findAll().stream()
+                .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.REALIZADA)
+                .collect(Collectors.groupingBy(Consulta::getMedico, Collectors.counting()));
+    }
 
-  private List<Avaliacao> avaliacoesDoMedico(Medico medico) {
+    public Optional<Especialidade> especialidadeMaisProcurada() {
 
-    return avaliacaoRepository.findAll().stream()
-        .filter(avaliacao -> avaliacao.getMedico() != null && avaliacao.getMedico().equals(medico))
-        .toList();
-  }
+        Map<Especialidade, Long> quantidadePorEspecialidade =
+                consultaRepository.findAll().stream()
+                        .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.REALIZADA)
+                        .filter(
+                                consulta ->
+                                        consulta.getMedico() != null
+                                                && consulta.getMedico().getEspecialidade() != null)
+                        .collect(
+                                Collectors.groupingBy(
+                                        consulta -> consulta.getMedico().getEspecialidade(),
+                                        Collectors.counting()));
+
+        return quantidadePorEspecialidade.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey);
+    }
+
+    private List<Avaliacao> avaliacoesDoMedico(Medico medico) {
+
+        return avaliacaoRepository.findAll().stream()
+                .filter(
+                        avaliacao ->
+                                avaliacao.getMedico() != null
+                                        && avaliacao.getMedico().equals(medico))
+                .toList();
+    }
 }
