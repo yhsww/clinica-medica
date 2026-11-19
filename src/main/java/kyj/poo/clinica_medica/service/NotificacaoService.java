@@ -1,5 +1,6 @@
 package kyj.poo.clinica_medica.service;
 
+import java.util.List;
 import kyj.poo.clinica_medica.exception.RecursoNaoEncontradoException;
 import kyj.poo.clinica_medica.model.Notificacao;
 import kyj.poo.clinica_medica.model.Paciente;
@@ -7,98 +8,68 @@ import kyj.poo.clinica_medica.repository.NotificacaoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 public class NotificacaoService {
 
-    private final NotificacaoRepository notificacaoRepository;
+  private final NotificacaoRepository notificacaoRepository;
 
-    public NotificacaoService(
-            NotificacaoRepository notificacaoRepository) {
+  public NotificacaoService(NotificacaoRepository notificacaoRepository) {
 
-        this.notificacaoRepository = notificacaoRepository;
+    this.notificacaoRepository = notificacaoRepository;
+  }
+
+  @Transactional
+  public Notificacao criar(Paciente paciente, String mensagem) {
+
+    if (paciente == null) {
+      throw new IllegalArgumentException("O paciente é obrigatório.");
     }
 
-    @Transactional
-    public Notificacao criar(
-            Paciente paciente,
-            String mensagem) {
-
-        if (paciente == null) {
-            throw new IllegalArgumentException(
-                    "O paciente é obrigatório."
-            );
-        }
-
-        if (mensagem == null || mensagem.isBlank()) {
-            throw new IllegalArgumentException(
-                    "A mensagem da notificação é obrigatória."
-            );
-        }
-
-        Notificacao notificacao =
-                new Notificacao(
-                        paciente,
-                        mensagem);
-
-        return notificacaoRepository.save(notificacao);
+    if (mensagem == null || mensagem.isBlank()) {
+      throw new IllegalArgumentException("A mensagem da notificação é obrigatória.");
     }
 
-    public List<Notificacao> listarPorPaciente(
-            Paciente paciente) {
+    Notificacao notificacao = new Notificacao(paciente, mensagem);
 
-        if (paciente == null) {
-            throw new IllegalArgumentException(
-                    "O paciente é obrigatório."
-            );
-        }
+    return notificacaoRepository.save(notificacao);
+  }
 
-        return notificacaoRepository
-                .findByPacienteOrderByDataHoraDesc(paciente);
+  public List<Notificacao> listarPorPaciente(Paciente paciente) {
+
+    if (paciente == null) {
+      throw new IllegalArgumentException("O paciente é obrigatório.");
     }
 
-    public List<Notificacao> listarNaoLidas(
-            Paciente paciente) {
+    return notificacaoRepository.findByPacienteOrderByDataHoraDesc(paciente);
+  }
 
-        if (paciente == null) {
-            throw new IllegalArgumentException(
-                    "O paciente é obrigatório."
-            );
-        }
+  public List<Notificacao> listarNaoLidas(Paciente paciente) {
 
-        return notificacaoRepository
-                .findByPacienteAndLidaFalseOrderByDataHoraDesc(
-                        paciente);
+    if (paciente == null) {
+      throw new IllegalArgumentException("O paciente é obrigatório.");
     }
 
-    @Transactional
-    public Notificacao marcarComoLida(
-            Long notificacaoId) {
+    return notificacaoRepository.findByPacienteAndLidaFalseOrderByDataHoraDesc(paciente);
+  }
 
-        Notificacao notificacao =
-                buscarPorId(notificacaoId);
+  @Transactional
+  public Notificacao marcarComoLida(Long notificacaoId) {
 
-        notificacao.setLida(true);
+    Notificacao notificacao = buscarPorId(notificacaoId);
 
-        return notificacaoRepository.save(notificacao);
+    notificacao.setLida(true);
+
+    return notificacaoRepository.save(notificacao);
+  }
+
+  public Notificacao buscarPorId(Long notificacaoId) {
+
+    if (notificacaoId == null) {
+      throw new IllegalArgumentException("O ID da notificação é obrigatório.");
     }
 
-    public Notificacao buscarPorId(
-            Long notificacaoId) {
-
-        if (notificacaoId == null) {
-            throw new IllegalArgumentException(
-                    "O ID da notificação é obrigatório."
-            );
-        }
-
-        return notificacaoRepository
-                .findById(notificacaoId)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Notificação não encontrada."
-                        )
-                );
-    }
+    return notificacaoRepository
+        .findById(notificacaoId)
+        .orElseThrow(() -> new RecursoNaoEncontradoException("Notificação não encontrada."));
+  }
 }

@@ -13,92 +13,74 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ConsultaService {
 
-    private final ConsultaRepository consultaRepository;
-    private final ListaDeEsperaService listaDeEsperaService;
+  private final ConsultaRepository consultaRepository;
+  private final ListaDeEsperaService listaDeEsperaService;
 
-    public ConsultaService(
-            ConsultaRepository consultaRepository,
-            ListaDeEsperaService listaDeEsperaService) {
+  public ConsultaService(
+      ConsultaRepository consultaRepository, ListaDeEsperaService listaDeEsperaService) {
 
-        this.consultaRepository = consultaRepository;
-        this.listaDeEsperaService = listaDeEsperaService;
+    this.consultaRepository = consultaRepository;
+    this.listaDeEsperaService = listaDeEsperaService;
+  }
+
+  @Transactional
+  public Consulta cancelar(Long consultaId) {
+
+    Consulta consulta = buscarPorId(consultaId);
+
+    if (consulta.getEstado() != EstadoDaConsulta.AGENDADA) {
+      throw new OperacaoInvalidaException("Somente consultas agendadas podem ser canceladas.");
     }
 
-    @Transactional
-    public Consulta cancelar(Long consultaId) {
+    consulta.setEstado(EstadoDaConsulta.CANCELADA);
 
-        Consulta consulta = buscarPorId(consultaId);
+    Consulta consultaCancelada = consultaRepository.save(consulta);
 
-        if (consulta.getEstado() != EstadoDaConsulta.AGENDADA) {
-            throw new OperacaoInvalidaException(
-                    "Somente consultas agendadas podem ser canceladas."
-            );
-        }
+    listaDeEsperaService.promoverPrimeiroDaFila(consulta.getMedico(), consulta.getData());
 
-        consulta.setEstado(EstadoDaConsulta.CANCELADA);
+    return consultaCancelada;
+  }
 
-        Consulta consultaCancelada =
-                consultaRepository.save(consulta);
+  @Transactional
+  public Consulta realizar(Long consultaId) {
 
-        listaDeEsperaService.promoverPrimeiroDaFila(
-                consulta.getMedico(),
-                consulta.getData()
-        );
+    Consulta consulta = buscarPorId(consultaId);
 
-        return consultaCancelada;
+    if (consulta.getEstado() != EstadoDaConsulta.AGENDADA) {
+      throw new OperacaoInvalidaException("Somente consultas agendadas podem ser realizadas.");
     }
 
-    @Transactional
-    public Consulta realizar(Long consultaId) {
+    consulta.setEstado(EstadoDaConsulta.REALIZADA);
 
-        Consulta consulta = buscarPorId(consultaId);
+    return consultaRepository.save(consulta);
+  }
 
-        if (consulta.getEstado() != EstadoDaConsulta.AGENDADA) {
-            throw new OperacaoInvalidaException(
-                    "Somente consultas agendadas podem ser realizadas."
-            );
-        }
+  public Consulta buscarPorId(Long consultaId) {
 
-        consulta.setEstado(EstadoDaConsulta.REALIZADA);
-
-        return consultaRepository.save(consulta);
+    if (consultaId == null) {
+      throw new IllegalArgumentException("O ID da consulta é obrigatório.");
     }
 
-    public Consulta buscarPorId(Long consultaId) {
+    return consultaRepository
+        .findById(consultaId)
+        .orElseThrow(() -> new RecursoNaoEncontradoException("Consulta não encontrada."));
+  }
 
-        if (consultaId == null) {
-            throw new IllegalArgumentException(
-                    "O ID da consulta é obrigatório."
-            );
-        }
+  public boolean pertenceAoPaciente(Consulta consulta, Paciente paciente) {
 
-        return consultaRepository.findById(consultaId)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Consulta não encontrada."
-                        )
-                );
+    if (consulta == null || paciente == null) {
+      return false;
     }
 
-    public boolean pertenceAoPaciente(
-            Consulta consulta,
-            Paciente paciente) {
+    return consulta.getPaciente().equals(paciente);
+  }
 
-        if (consulta == null || paciente == null) {
-            return false;
-        }
+  public boolean pertenceAoMedico(Consulta consulta, Medico medico) {
 
-        return consulta.getPaciente().equals(paciente);
+    if (consulta == null || medico == null) {
+      return false;
     }
 
-    public boolean pertenceAoMedico(
-            Consulta consulta,
-            Medico medico) {
-
-        if (consulta == null || medico == null) {
-            return false;
-        }
-
-        return consulta.getMedico().equals(medico);
-    }
+    return consulta.getMedico().equals(medico);
+  }
 }

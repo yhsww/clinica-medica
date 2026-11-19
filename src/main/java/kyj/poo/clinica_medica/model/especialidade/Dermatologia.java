@@ -6,18 +6,17 @@ import java.math.BigDecimal;
 @Entity
 public class Dermatologia extends Especialidade {
 
-    public Dermatologia() {
-        super("Dermatologia");
-    }
+  public Dermatologia() {
+    super("Dermatologia");
+  }
 
-    @Override
-    public int getLimiteConsultasPorDia() {
-        return 3;
-    }
+  @Override
+  public int getLimiteConsultasPorDia() {
+    return 3;
+  }
 
-    @Override
-    public BigDecimal calcularValorConsulta(
-            BigDecimal valorBase) {
-        return valorBase;
-    }
+  @Override
+  public BigDecimal calcularValorConsulta(BigDecimal valorBase) {
+    return valorBase;
+  }
 }

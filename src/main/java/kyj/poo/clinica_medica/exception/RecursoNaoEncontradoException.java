@@ -1,9 +1,8 @@
 package kyj.poo.clinica_medica.exception;
 
-public class RecursoNaoEncontradoException
-        extends RuntimeException {
+public class RecursoNaoEncontradoException extends RuntimeException {
 
-    public RecursoNaoEncontradoException(String mensagem) {
-        super(mensagem);
-    }
+  public RecursoNaoEncontradoException(String mensagem) {
+    super(mensagem);
+  }
 }
