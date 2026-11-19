@@ -1,1 +1,8 @@
-# dps de dar commit, façam git config pull.rebase true (so da primeira vez) e git pull alguns segundos depois﻿
+implementar o frontend
+
+integrar frontend e backend
+
+implementar os controllers/API necessários
+
+finalizar os fluxos de autenticação e acesso
+
