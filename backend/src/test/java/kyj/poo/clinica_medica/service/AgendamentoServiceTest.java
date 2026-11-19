@@ -5,10 +5,10 @@ import static org.mockito.Mockito.*;
 
 import kyj.poo.clinica_medica.exception.AgendamentoIndisponivelException;
 import kyj.poo.clinica_medica.model.Consulta;
-import kyj.poo.clinica_medica.model.Especialidade;
 import kyj.poo.clinica_medica.model.EstadoDaConsulta;
 import kyj.poo.clinica_medica.model.Medico;
 import kyj.poo.clinica_medica.model.Paciente;
+import kyj.poo.clinica_medica.model.especialidade.Especialidade;
 import kyj.poo.clinica_medica.repository.ConsultaRepository;
 import kyj.poo.clinica_medica.repository.ListaDeEsperaRepository;
 
