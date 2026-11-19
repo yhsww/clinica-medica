@@ -85,7 +85,17 @@ public class ListaDeEsperaService {
     @Transactional
     public Consulta promoverPrimeiroDaFila(Medico medico, LocalDate data) {
 
-        validarDados(medico, null, data);
+        if (medico == null) {
+            throw new IllegalArgumentException("O médico é obrigatório.");
+        }
+
+        if (data == null) {
+            throw new IllegalArgumentException("A data da consulta é obrigatória.");
+        }
+
+        if (medico.getEspecialidade() == null) {
+            throw new IllegalArgumentException("O médico precisa possuir uma especialidade.");
+        }
 
         while (true) {
             ListaDeEspera entrada = primeiroDaFila(medico, data);
@@ -96,8 +106,7 @@ public class ListaDeEsperaService {
 
             long consultasAtivas =
                     consultaRepository.findByMedicoAndData(medico, data).stream()
-                            .filter(consulta -> consulta.getEstado()
-                                    == EstadoDaConsulta.AGENDADA)
+                            .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.AGENDADA)
                             .count();
 
             if (consultasAtivas >= medico.getEspecialidade().getLimiteConsultasPorDia()) {
@@ -109,8 +118,11 @@ public class ListaDeEsperaService {
             boolean jaPossuiConsulta =
                     consultaRepository
                             .findByMedicoAndPacienteAndData(medico, paciente, data)
-                            .filter(consulta -> consulta.getEstado()
-                                    == kyj.poo.clinica_medica.model.EstadoDaConsulta.AGENDADA)
+                            .filter(
+                                    consulta ->
+                                            consulta.getEstado()
+                                                    == kyj.poo.clinica_medica.model.EstadoDaConsulta
+                                                            .AGENDADA)
                             .isPresent();
 
             if (jaPossuiConsulta) {
