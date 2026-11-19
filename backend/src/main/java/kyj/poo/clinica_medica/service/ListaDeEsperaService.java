@@ -2,6 +2,7 @@ package kyj.poo.clinica_medica.service;
 
 import kyj.poo.clinica_medica.exception.OperacaoInvalidaException;
 import kyj.poo.clinica_medica.model.Consulta;
+import kyj.poo.clinica_medica.model.EstadoDaConsulta;
 import kyj.poo.clinica_medica.model.ListaDeEspera;
 import kyj.poo.clinica_medica.model.Medico;
 import kyj.poo.clinica_medica.model.Notificacao;
@@ -84,37 +85,62 @@ public class ListaDeEsperaService {
     @Transactional
     public Consulta promoverPrimeiroDaFila(Medico medico, LocalDate data) {
 
-        ListaDeEspera entrada = primeiroDaFila(medico, data);
+        validarDados(medico, null, data);
 
-        if (entrada == null) {
-            return null;
+        while (true) {
+            ListaDeEspera entrada = primeiroDaFila(medico, data);
+
+            if (entrada == null) {
+                return null;
+            }
+
+            long consultasAtivas =
+                    consultaRepository.findByMedicoAndData(medico, data).stream()
+                            .filter(consulta -> consulta.getEstado()
+                                    == EstadoDaConsulta.AGENDADA)
+                            .count();
+
+            if (consultasAtivas >= medico.getEspecialidade().getLimiteConsultasPorDia()) {
+                return null;
+            }
+
+            Paciente paciente = entrada.getPaciente();
+
+            boolean jaPossuiConsulta =
+                    consultaRepository
+                            .findByMedicoAndPacienteAndData(medico, paciente, data)
+                            .filter(consulta -> consulta.getEstado()
+                                    == kyj.poo.clinica_medica.model.EstadoDaConsulta.AGENDADA)
+                            .isPresent();
+
+            if (jaPossuiConsulta) {
+                listaDeEsperaRepository.delete(entrada);
+                reorganizarFila(medico, data);
+                continue;
+            }
+
+            BigDecimal valor = calcularValorConsulta(medico, paciente);
+
+            Consulta consulta = new Consulta(medico, paciente, data, valor);
+            Consulta consultaSalva = consultaRepository.save(consulta);
+
+            Notificacao notificacao =
+                    new Notificacao(
+                            paciente,
+                            "Você foi promovido da lista de espera. "
+                                    + "Sua consulta com o médico "
+                                    + medico.getNome()
+                                    + " foi agendada para "
+                                    + data
+                                    + ".");
+
+            notificacaoRepository.save(notificacao);
+
+            listaDeEsperaRepository.delete(entrada);
+            reorganizarFila(medico, data);
+
+            return consultaSalva;
         }
-
-        Paciente paciente = entrada.getPaciente();
-
-        BigDecimal valor = calcularValorConsulta(medico, paciente);
-
-        Consulta consulta = new Consulta(medico, paciente, data, valor);
-
-        Consulta consultaSalva = consultaRepository.save(consulta);
-
-        Notificacao notificacao =
-                new Notificacao(
-                        paciente,
-                        "Você foi promovido da lista de espera. "
-                                + "Sua consulta com o médico "
-                                + medico.getNome()
-                                + " foi agendada para "
-                                + data
-                                + ".");
-
-        notificacaoRepository.save(notificacao);
-
-        listaDeEsperaRepository.delete(entrada);
-
-        reorganizarFila(medico, data);
-
-        return consultaSalva;
     }
 
     /**
