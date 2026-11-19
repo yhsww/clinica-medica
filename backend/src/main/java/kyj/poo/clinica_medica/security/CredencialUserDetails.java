@@ -1,6 +1,7 @@
 package kyj.poo.clinica_medica.security;
 
 import kyj.poo.clinica_medica.model.Credencial;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,9 +19,7 @@ public class CredencialUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(
-                new SimpleGrantedAuthority("ROLE_" + credencial.getPapel().name())
-        );
+        return List.of(new SimpleGrantedAuthority("ROLE_" + credencial.getPapel().name()));
     }
 
     @Override
