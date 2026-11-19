@@ -3,11 +3,6 @@ package kyj.poo.clinica_medica.service;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
 import kyj.poo.clinica_medica.exception.AgendamentoIndisponivelException;
 import kyj.poo.clinica_medica.model.Consulta;
 import kyj.poo.clinica_medica.model.Especialidade;
@@ -18,6 +13,11 @@ import kyj.poo.clinica_medica.repository.ConsultaRepository;
 import kyj.poo.clinica_medica.repository.ListaDeEsperaRepository;
 
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 class AgendamentoServiceTest {
 
