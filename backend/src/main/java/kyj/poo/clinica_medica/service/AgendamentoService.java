@@ -31,7 +31,7 @@ public class AgendamentoService {
         this.listaDeEsperaRepository = listaDeEsperaRepository;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = AgendamentoIndisponivelException.class)
     public Consulta agendar(Medico medico, Paciente paciente, LocalDate data) {
 
         validarDados(medico, paciente, data);
