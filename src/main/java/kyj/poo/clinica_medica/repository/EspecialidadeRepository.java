@@ -1,6 +1,6 @@
 package kyj.poo.clinica_medica.repository;
 
-import kyj.poo.clinica_medica.model.Especialidade;
+import kyj.poo.clinica_medica.model.especialidade.Especialidade;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

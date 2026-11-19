@@ -1,5 +1,6 @@
 package kyj.poo.clinica_medica.model;
 
+import kyj.poo.clinica_medica.model.especialidade.Especialidade;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
