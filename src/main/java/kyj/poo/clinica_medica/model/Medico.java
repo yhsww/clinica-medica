@@ -1,0 +1,88 @@
+package kyj.poo.clinica_medica.model;
+
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+public class Medico extends Usuario {
+
+    @ManyToOne
+    private Especialidade especialidade;
+
+    private BigDecimal valorConsultaParticular;
+
+    @ManyToMany
+    @JoinTable(
+            name = "medico_plano",
+            joinColumns = @JoinColumn(name = "medico_id"),
+            inverseJoinColumns = @JoinColumn(name = "plano_id")
+    )
+    private List<Plano> planosAceitos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "medico")
+    private List<Avaliacao> avaliacoes = new ArrayList<>();
+
+    public Medico() {}
+
+    public Medico(
+            String nome,
+            String email,
+            String senha,
+            Especialidade especialidade,
+            BigDecimal valorConsultaParticular
+    ) {
+        super(nome, email, senha);
+        this.especialidade = especialidade;
+        this.valorConsultaParticular = valorConsultaParticular;
+    }
+
+    public Especialidade getEspecialidade() {
+        return this.especialidade;
+    }
+
+    public void setEspecialidade(Especialidade especialidade) {
+        this.especialidade = especialidade;
+    }
+
+    public BigDecimal getValorConsultaParticular() {
+        return this.valorConsultaParticular;
+    }
+
+    public void setValorConsultaParticular(
+            BigDecimal valorConsultaParticular
+    ) {
+        this.valorConsultaParticular = valorConsultaParticular;
+    }
+
+    public List<Plano> getPlanosAceitos() {
+        return this.planosAceitos;
+    }
+
+    public void setPlanosAceitos(List<Plano> planosAceitos) {
+        this.planosAceitos = planosAceitos;
+    }
+
+    public void adicionarPlanoAceito(Plano plano) {
+        if (plano != null && !planosAceitos.contains(plano)) {
+            planosAceitos.add(plano);
+        }
+    }
+
+    public void removerPlanoAceito(Plano plano) {
+        planosAceitos.remove(plano);
+    }
+
+    public boolean aceitaPlano(Plano plano) {
+        return plano != null && planosAceitos.contains(plano);
+    }
+
+    public List<Avaliacao> getAvaliacoes() {
+        return avaliacoes;
+    }
+
+    public void setAvaliacoes(List<Avaliacao> avaliacoes) {
+        this.avaliacoes = avaliacoes;
+    }
+}
