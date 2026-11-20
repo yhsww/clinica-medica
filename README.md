@@ -1,8 +1,9 @@
-implementar o frontend
+# baixem o bun e executem bun dev no terminal pra rodar o front
 
-integrar frontend e backend
+- [ ] implementar o frontend
 
-implementar os controllers/API necessários
+- [ ] integrar frontend e backend
 
-finalizar os fluxos de autenticação e acesso
+- [ ] implementar os controllers/API necessários
 
+- [ ] finalizar os fluxos de autenticação e acesso
