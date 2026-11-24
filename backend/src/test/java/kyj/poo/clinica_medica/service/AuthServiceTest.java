@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Test;
 class AuthServiceTest {
 
     private final CredencialService credencialService = mock(CredencialService.class);
-
-    private final AuthService authService = new AuthService(credencialService);
+    private final PacienteService pacienteService = mock(PacienteService.class);
+    private final MedicoService medicoService = mock(MedicoService.class);
+    private final AuthService authService =
+            new AuthService(credencialService, pacienteService, medicoService);
 
     @Test
     void deveAutenticarComCredenciaisValidas() {
