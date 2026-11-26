@@ -1,6 +1,8 @@
 package kyj.poo.clinica_medica.service;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import kyj.poo.clinica_medica.exception.AgendamentoIndisponivelException;
@@ -36,17 +38,24 @@ class AgendamentoServiceTest {
         Consulta consulta2 = mock(Consulta.class);
 
         LocalDateTime dataHora = LocalDate.now().plusDays(1).atTime(10, 30);
+        LocalDate data = dataHora.toLocalDate();
+        LocalDateTime inicio = data.atStartOfDay();
+        LocalDateTime fim = data.plusDays(1).atStartOfDay();
 
         when(medico.getEspecialidade()).thenReturn(especialidade);
         when(especialidade.getLimiteConsultasPorDia()).thenReturn(2);
         when(medico.getValorConsultaParticular()).thenReturn(new BigDecimal("200.00"));
-        when(consultaRepository.findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(\n                        eq(medico), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(consultaRepository.findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(
+                        medico, paciente, inicio, fim))
                 .thenReturn(Optional.empty());
         when(consulta1.getEstado()).thenReturn(EstadoDaConsulta.AGENDADA);
         when(consulta2.getEstado()).thenReturn(EstadoDaConsulta.AGENDADA);
-        when(consultaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThan(\n                        eq(medico), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(consultaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThan(
+                        medico, inicio, fim))
                 .thenReturn(List.of(consulta1, consulta2));
-        when(listaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByPosicaoAsc(\n                        eq(medico), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(listaRepository
+                        .findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByPosicaoAsc(
+                                medico, inicio, fim))
                 .thenReturn(List.of());
 
         assertThrows(
