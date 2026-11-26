@@ -8,6 +8,8 @@ import kyj.poo.clinica_medica.model.Medico;
 import kyj.poo.clinica_medica.model.Paciente;
 import kyj.poo.clinica_medica.repository.ConsultaRepository;
 
+import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +40,7 @@ public class ConsultaService {
 
         Consulta consultaCancelada = consultaRepository.save(consulta);
 
-        listaDeEsperaService.promoverPrimeiroDaFila(consulta.getMedico(), consulta.getData());
+        listaDeEsperaService.promoverPrimeiroDaFila(consulta.getMedico(), consulta.getDataHora().toLocalDate());
 
         return consultaCancelada;
     }
