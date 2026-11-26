@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -23,17 +23,18 @@ public class Consulta {
 
     @ManyToOne private Paciente paciente;
 
-    private LocalDate data;
+    @Column(name = "data")
+    private LocalDateTime dataHora;
 
     @Enumerated(EnumType.STRING)
     private EstadoDaConsulta estado;
 
     private BigDecimal valorCobrado;
 
-    public Consulta(Medico medico, Paciente paciente, LocalDate data, BigDecimal valorCobrado) {
+    public Consulta(Medico medico, Paciente paciente, LocalDateTime dataHora, BigDecimal valorCobrado) {
         this.medico = medico;
         this.paciente = paciente;
-        this.data = data;
+        this.dataHora = dataHora;
         this.estado = EstadoDaConsulta.AGENDADA;
         this.valorCobrado = valorCobrado;
     }
