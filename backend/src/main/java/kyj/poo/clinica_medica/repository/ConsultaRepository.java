@@ -6,16 +6,17 @@ import kyj.poo.clinica_medica.model.Paciente;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
 
-    List<Consulta> findByMedicoAndData(Medico medico, LocalDate data);
+    List<Consulta> findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThan(
+            Medico medico, LocalDateTime inicio, LocalDateTime fim);
 
-    Optional<Consulta> findByMedicoAndPacienteAndData(
-            Medico medico, Paciente paciente, LocalDate data);
+    Optional<Consulta> findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(
+            Medico medico, Paciente paciente, LocalDateTime inicio, LocalDateTime fim);
 
     boolean existsByMedico_Id(Long medicoId);
 
