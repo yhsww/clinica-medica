@@ -31,18 +31,16 @@ public class ListaDeEsperaService {
             ListaDeEsperaRepository listaDeEsperaRepository,
             ConsultaRepository consultaRepository,
             NotificacaoRepository notificacaoRepository) {
-
         this.listaDeEsperaRepository = listaDeEsperaRepository;
         this.consultaRepository = consultaRepository;
         this.notificacaoRepository = notificacaoRepository;
     }
 
     public ListaDeEspera adicionar(Medico medico, Paciente paciente, LocalDateTime dataHora) {
-
         validarDados(medico, paciente, dataHora);
 
-        List<ListaDeEspera> fila =
-                listaDeEsperaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByPosicaoAsc(\n                        medico, data.atStartOfDay(), data.plusDays(1).atStartOfDay());
+        LocalDate data = dataHora.toLocalDate();
+        List<ListaDeEspera> fila = buscarFilaDoDia(medico, data);
 
         boolean jaEstaNaFila =
                 fila.stream().anyMatch(entrada -> entrada.getPaciente().equals(paciente));
@@ -53,60 +51,54 @@ public class ListaDeEsperaService {
         }
 
         int posicao = fila.size() + 1;
-
         ListaDeEspera entrada = new ListaDeEspera(medico, paciente, dataHora, posicao);
-
         return listaDeEsperaRepository.save(entrada);
     }
 
     public List<ListaDeEspera> listar(Medico medico, LocalDate data) {
-
         if (medico == null) {
             throw new IllegalArgumentException("O médico é obrigatório.");
         }
-
-        if (dataHora == null) {
+        if (data == null) {
             throw new IllegalArgumentException("A data é obrigatória.");
         }
-
-        return listaDeEsperaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByPosicaoAsc(\n                medico, data.atStartOfDay(), data.plusDays(1).atStartOfDay());
+        return buscarFilaDoDia(medico, data);
     }
 
     public ListaDeEspera primeiroDaFila(Medico medico, LocalDate data) {
-
         List<ListaDeEspera> fila = listar(medico, data);
-
         if (fila.isEmpty()) {
             return null;
         }
-
         return fila.get(0);
     }
 
     @Transactional
     public Consulta promoverPrimeiroDaFila(Medico medico, LocalDate data) {
-
         if (medico == null) {
             throw new IllegalArgumentException("O médico é obrigatório.");
         }
-
         if (data == null) {
             throw new IllegalArgumentException("A data da consulta é obrigatória.");
         }
-
         if (medico.getEspecialidade() == null) {
             throw new IllegalArgumentException("O médico precisa possuir uma especialidade.");
         }
 
         while (true) {
             ListaDeEspera entrada = primeiroDaFila(medico, data);
-
             if (entrada == null) {
                 return null;
             }
 
+            LocalDateTime inicio = data.atStartOfDay();
+            LocalDateTime fim = data.plusDays(1).atStartOfDay();
+
             long consultasAtivas =
-                    consultaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThan(\n                            medico, data.atStartOfDay(), data.plusDays(1).atStartOfDay()).stream()
+                    consultaRepository
+                            .findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThan(
+                                    medico, inicio, fim)
+                            .stream()
                             .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.AGENDADA)
                             .count();
 
@@ -115,15 +107,13 @@ public class ListaDeEsperaService {
             }
 
             Paciente paciente = entrada.getPaciente();
-
             boolean jaPossuiConsulta =
                     consultaRepository
-                            .findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(\n                                    medico, paciente, data.atStartOfDay(), data.plusDays(1).atStartOfDay())
+                            .findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(
+                                    medico, paciente, inicio, fim)
                             .filter(
                                     consulta ->
-                                            consulta.getEstado()
-                                                    == kyj.poo.clinica_medica.model.EstadoDaConsulta
-                                                            .AGENDADA)
+                                            consulta.getEstado() == EstadoDaConsulta.AGENDADA)
                             .isPresent();
 
             if (jaPossuiConsulta) {
@@ -133,8 +123,8 @@ public class ListaDeEsperaService {
             }
 
             BigDecimal valor = calcularValorConsulta(medico, paciente);
-
-            Consulta consulta = new Consulta(medico, paciente, entrada.getDataHora(), valor);
+            Consulta consulta =
+                    new Consulta(medico, paciente, entrada.getDataHora(), valor);
             Consulta consultaSalva = consultaRepository.save(consulta);
 
             Notificacao notificacao =
@@ -146,65 +136,48 @@ public class ListaDeEsperaService {
                                     + " foi agendada para "
                                     + entrada.getDataHora()
                                     + ".");
-
             notificacaoRepository.save(notificacao);
 
             listaDeEsperaRepository.delete(entrada);
             reorganizarFila(medico, data);
-
             return consultaSalva;
         }
     }
 
-    /**
-     * Calcula o valor da consulta respeitando:
-     *
-     * <p>1. Cobertura do plano aceito pelo médico; 2. Valor particular do médico; 3. Regra de preço
-     * da especialidade.
-     */
+    private List<ListaDeEspera> buscarFilaDoDia(Medico medico, LocalDate data) {
+        return listaDeEsperaRepository
+                .findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByPosicaoAsc(
+                        medico, data.atStartOfDay(), data.plusDays(1).atStartOfDay());
+    }
+
     private BigDecimal calcularValorConsulta(Medico medico, Paciente paciente) {
-
         Plano plano = paciente.getPlanoSaude();
-
-        // Convênio aceito pelo médico: paciente não paga.
         if (plano != null && medico.aceitaPlano(plano)) {
             return BigDecimal.ZERO;
         }
-
-        // Valor particular definido pelo médico.
         BigDecimal valorBase = medico.getValorConsultaParticular();
-
-        // A especialidade aplica sua própria regra.
         return medico.getEspecialidade().calcularValorConsulta(valorBase);
     }
 
     private void reorganizarFila(Medico medico, LocalDate data) {
-
-        List<ListaDeEspera> fila =
-                listaDeEsperaRepository.findByMedicoAndDataOrderByPosicaoAsc(medico, data);
-
+        List<ListaDeEspera> fila = buscarFilaDoDia(medico, data);
         for (int i = 0; i < fila.size(); i++) {
             fila.get(i).setPosicao(i + 1);
         }
-
         listaDeEsperaRepository.saveAll(fila);
     }
 
     private void validarDados(Medico medico, Paciente paciente, LocalDateTime dataHora) {
-
         if (medico == null) {
             throw new IllegalArgumentException("O médico é obrigatório.");
         }
-
         if (paciente == null) {
             throw new IllegalArgumentException("O paciente é obrigatório.");
         }
-
         if (paciente.getId() == null) {
             throw new IllegalArgumentException("O paciente informado é inválido.");
         }
-
-        if (data == null) {
+        if (dataHora == null) {
             throw new IllegalArgumentException("A data da consulta é obrigatória.");
         }
     }
