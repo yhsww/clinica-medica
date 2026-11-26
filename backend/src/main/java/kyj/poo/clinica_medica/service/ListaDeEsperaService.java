@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -36,12 +37,12 @@ public class ListaDeEsperaService {
         this.notificacaoRepository = notificacaoRepository;
     }
 
-    public ListaDeEspera adicionar(Medico medico, Paciente paciente, LocalDate data) {
+    public ListaDeEspera adicionar(Medico medico, Paciente paciente, LocalDateTime dataHora) {
 
-        validarDados(medico, paciente, data);
+        validarDados(medico, paciente, dataHora);
 
         List<ListaDeEspera> fila =
-                listaDeEsperaRepository.findByMedicoAndDataOrderByPosicaoAsc(medico, data);
+                listaDeEsperaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByPosicaoAsc(\n                        medico, data.atStartOfDay(), data.plusDays(1).atStartOfDay());
 
         boolean jaEstaNaFila =
                 fila.stream().anyMatch(entrada -> entrada.getPaciente().equals(paciente));
@@ -53,7 +54,7 @@ public class ListaDeEsperaService {
 
         int posicao = fila.size() + 1;
 
-        ListaDeEspera entrada = new ListaDeEspera(medico, paciente, data, posicao);
+        ListaDeEspera entrada = new ListaDeEspera(medico, paciente, dataHora, posicao);
 
         return listaDeEsperaRepository.save(entrada);
     }
@@ -64,11 +65,11 @@ public class ListaDeEsperaService {
             throw new IllegalArgumentException("O médico é obrigatório.");
         }
 
-        if (data == null) {
+        if (dataHora == null) {
             throw new IllegalArgumentException("A data é obrigatória.");
         }
 
-        return listaDeEsperaRepository.findByMedicoAndDataOrderByPosicaoAsc(medico, data);
+        return listaDeEsperaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByPosicaoAsc(\n                medico, data.atStartOfDay(), data.plusDays(1).atStartOfDay());
     }
 
     public ListaDeEspera primeiroDaFila(Medico medico, LocalDate data) {
@@ -105,7 +106,7 @@ public class ListaDeEsperaService {
             }
 
             long consultasAtivas =
-                    consultaRepository.findByMedicoAndData(medico, data).stream()
+                    consultaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThan(\n                            medico, data.atStartOfDay(), data.plusDays(1).atStartOfDay()).stream()
                             .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.AGENDADA)
                             .count();
 
@@ -117,7 +118,7 @@ public class ListaDeEsperaService {
 
             boolean jaPossuiConsulta =
                     consultaRepository
-                            .findByMedicoAndPacienteAndData(medico, paciente, data)
+                            .findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(\n                                    medico, paciente, data.atStartOfDay(), data.plusDays(1).atStartOfDay())
                             .filter(
                                     consulta ->
                                             consulta.getEstado()
@@ -133,7 +134,7 @@ public class ListaDeEsperaService {
 
             BigDecimal valor = calcularValorConsulta(medico, paciente);
 
-            Consulta consulta = new Consulta(medico, paciente, data, valor);
+            Consulta consulta = new Consulta(medico, paciente, entrada.getDataHora(), valor);
             Consulta consultaSalva = consultaRepository.save(consulta);
 
             Notificacao notificacao =
@@ -143,7 +144,7 @@ public class ListaDeEsperaService {
                                     + "Sua consulta com o médico "
                                     + medico.getNome()
                                     + " foi agendada para "
-                                    + data
+                                    + entrada.getDataHora()
                                     + ".");
 
             notificacaoRepository.save(notificacao);
@@ -189,7 +190,7 @@ public class ListaDeEsperaService {
         listaDeEsperaRepository.saveAll(fila);
     }
 
-    private void validarDados(Medico medico, Paciente paciente, LocalDate data) {
+    private void validarDados(Medico medico, Paciente paciente, LocalDateTime dataHora) {
 
         if (medico == null) {
             throw new IllegalArgumentException("O médico é obrigatório.");
