@@ -11,6 +11,7 @@ import kyj.poo.clinica_medica.repository.ConsultaRepository;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 class ConsultaServiceTest {
@@ -25,11 +26,11 @@ class ConsultaServiceTest {
         Long consultaId = 1L;
         Medico medico = mock(Medico.class);
         Consulta consulta = mock(Consulta.class);
-        LocalDate data = LocalDate.now().plusDays(1);
+        LocalDateTime dataHora = LocalDate.now().plusDays(1).atTime(10, 30);
 
         when(consulta.getEstado()).thenReturn(EstadoDaConsulta.AGENDADA);
         when(consulta.getMedico()).thenReturn(medico);
-        when(consulta.getData()).thenReturn(data);
+        when(consulta.getDataHora()).thenReturn(dataHora);
         when(consultaRepository.findById(consultaId)).thenReturn(Optional.of(consulta));
         when(consultaRepository.save(consulta)).thenReturn(consulta);
 
@@ -37,6 +38,6 @@ class ConsultaServiceTest {
 
         assertEquals(consulta, resultado);
         verify(consulta).setEstado(EstadoDaConsulta.CANCELADA);
-        verify(listaDeEsperaService).promoverPrimeiroDaFila(medico, data);
+        verify(listaDeEsperaService).promoverPrimeiroDaFila(medico, dataHora.toLocalDate());
     }
 }
