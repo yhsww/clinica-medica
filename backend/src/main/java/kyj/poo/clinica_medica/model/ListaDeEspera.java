@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -22,14 +22,15 @@ public class ListaDeEspera {
 
     @ManyToOne private Paciente paciente;
 
-    private LocalDate data;
+    @Column(name = "data")
+    private LocalDateTime dataHora;
 
     private Integer posicao;
 
-    public ListaDeEspera(Medico medico, Paciente paciente, LocalDate data, Integer posicao) {
+    public ListaDeEspera(Medico medico, Paciente paciente, LocalDateTime dataHora, Integer posicao) {
         this.medico = medico;
         this.paciente = paciente;
-        this.data = data;
+        this.dataHora = dataHora;
         this.posicao = posicao;
     }
 }
