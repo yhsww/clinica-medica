@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -32,13 +33,13 @@ public class AgendamentoService {
     }
 
     @Transactional(noRollbackFor = AgendamentoIndisponivelException.class)
-    public Consulta agendar(Medico medico, Paciente paciente, LocalDate data) {
+    public Consulta agendar(Medico medico, Paciente paciente, LocalDateTime dataHora) {
 
-        validarDados(medico, paciente, data);
+        validarDados(medico, paciente, dataHora);
 
         boolean jaAgendado =
                 consultaRepository
-                        .findByMedicoAndPacienteAndData(medico, paciente, data)
+                        .findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(\n                                medico, dataHora.toLocalDate().atStartOfDay(), dataHora.toLocalDate().plusDays(1).atStartOfDay())
                         .filter(consulta -> consulta.getEstado() == EstadoDaConsulta.AGENDADA)
                         .isPresent();
 
@@ -47,7 +48,7 @@ public class AgendamentoService {
                     "O paciente já possui uma consulta agendada " + "com este médico nessa data.");
         }
 
-        List<Consulta> consultasDoDia = consultaRepository.findByMedicoAndData(medico, data);
+        List<Consulta> consultasDoDia = consultaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThan(\n                medico, dataHora.toLocalDate().atStartOfDay(), dataHora.toLocalDate().plusDays(1).atStartOfDay());
 
         long consultasAtivas =
                 consultasDoDia.stream()
@@ -58,7 +59,7 @@ public class AgendamentoService {
 
         if (consultasAtivas >= limite) {
 
-            adicionarNaListaDeEspera(medico, paciente, data);
+            adicionarNaListaDeEspera(medico, paciente, dataHora);
 
             throw new AgendamentoIndisponivelException(
                     "Não há vagas para este médico nessa data. "
@@ -67,15 +68,15 @@ public class AgendamentoService {
 
         BigDecimal valor = calcularValorConsulta(medico, paciente);
 
-        Consulta consulta = new Consulta(medico, paciente, data, valor);
+        Consulta consulta = new Consulta(medico, paciente, dataHora, valor);
 
         return consultaRepository.save(consulta);
     }
 
-    private void adicionarNaListaDeEspera(Medico medico, Paciente paciente, LocalDate data) {
+    private void adicionarNaListaDeEspera(Medico medico, Paciente paciente, LocalDateTime dataHora) {
 
         List<ListaDeEspera> fila =
-                listaDeEsperaRepository.findByMedicoAndDataOrderByPosicaoAsc(medico, data);
+                listaDeEsperaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByPosicaoAsc(\n                        medico, dataHora.toLocalDate().atStartOfDay(), dataHora.toLocalDate().plusDays(1).atStartOfDay());
 
         boolean jaEstaNaFila =
                 fila.stream().anyMatch(entrada -> entrada.getPaciente().equals(paciente));
@@ -87,7 +88,7 @@ public class AgendamentoService {
 
         int posicao = fila.size() + 1;
 
-        ListaDeEspera entrada = new ListaDeEspera(medico, paciente, data, posicao);
+        ListaDeEspera entrada = new ListaDeEspera(medico, paciente, dataHora, posicao);
 
         listaDeEsperaRepository.save(entrada);
     }
@@ -105,7 +106,7 @@ public class AgendamentoService {
         return medico.getEspecialidade().calcularValorConsulta(valorBase);
     }
 
-    private void validarDados(Medico medico, Paciente paciente, LocalDate data) {
+    private void validarDados(Medico medico, Paciente paciente, LocalDateTime dataHora) {
 
         if (medico == null) {
             throw new IllegalArgumentException("O médico é obrigatório.");
@@ -115,11 +116,11 @@ public class AgendamentoService {
             throw new IllegalArgumentException("O paciente é obrigatório.");
         }
 
-        if (data == null) {
+        if (dataHora == null) {
             throw new IllegalArgumentException("A data da consulta é obrigatória.");
         }
 
-        if (data.isBefore(LocalDate.now())) {
+        if (dataHora.toLocalDate().isBefore(LocalDate.now())) {
             throw new AgendamentoIndisponivelException(
                     "Não é possível agendar uma consulta para uma data passada.");
         }
