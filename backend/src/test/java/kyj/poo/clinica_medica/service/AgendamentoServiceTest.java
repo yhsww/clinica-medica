@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,23 +35,23 @@ class AgendamentoServiceTest {
         Consulta consulta1 = mock(Consulta.class);
         Consulta consulta2 = mock(Consulta.class);
 
-        LocalDate data = LocalDate.now().plusDays(1);
+        LocalDateTime dataHora = LocalDate.now().plusDays(1).atTime(10, 30);
 
         when(medico.getEspecialidade()).thenReturn(especialidade);
         when(especialidade.getLimiteConsultasPorDia()).thenReturn(2);
         when(medico.getValorConsultaParticular()).thenReturn(new BigDecimal("200.00"));
-        when(consultaRepository.findByMedicoAndPacienteAndData(medico, paciente, data))
+        when(consultaRepository.findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(\n                        eq(medico), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Optional.empty());
         when(consulta1.getEstado()).thenReturn(EstadoDaConsulta.AGENDADA);
         when(consulta2.getEstado()).thenReturn(EstadoDaConsulta.AGENDADA);
-        when(consultaRepository.findByMedicoAndData(medico, data))
+        when(consultaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThan(\n                        eq(medico), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(List.of(consulta1, consulta2));
-        when(listaRepository.findByMedicoAndDataOrderByPosicaoAsc(medico, data))
+        when(listaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByPosicaoAsc(\n                        eq(medico), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(List.of());
 
         assertThrows(
                 AgendamentoIndisponivelException.class,
-                () -> service.agendar(medico, paciente, data));
+                () -> service.agendar(medico, paciente, dataHora));
 
         verify(listaRepository).save(any());
     }
