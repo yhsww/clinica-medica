@@ -1,7 +1,6 @@
 package kyj.poo.clinica_medica.model;
 
 import jakarta.persistence.*;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,7 +15,8 @@ public class Prontuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne private Consulta consulta;
+    @OneToOne
+    private Consulta consulta;
 
     private String sintomas;
 
@@ -31,13 +31,14 @@ public class Prontuario {
     private String observacoes;
 
     public Prontuario(
-            Consulta consulta,
-            String sintomas,
-            String diagnostico,
-            String tratamento,
-            String medicamentos,
-            String exames,
-            String observacoes) {
+        Consulta consulta,
+        String sintomas,
+        String diagnostico,
+        String tratamento,
+        String medicamentos,
+        String exames,
+        String observacoes
+    ) {
         this.consulta = consulta;
         this.sintomas = sintomas;
         this.diagnostico = diagnostico;

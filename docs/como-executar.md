@@ -58,13 +58,27 @@ o app fica em `http://localhost:5173` (ou `http://localhost:5174` caso a porta j
 | `medico@clinica.com`   | `senha123` |
 | `paciente@clinica.com` | `senha123` |
 
+### autenticação JWT
+
+`POST /api/auth/login` (e `/api/auth/cadastrar`) devolve um campo `token`.
+
 ### endpoints da API
 
-| Método                 | Rota                  | Descrição                                     |
-| ---------------------- | --------------------- | --------------------------------------------- |
-| `POST`                 | `/api/auth/login`     | autentica                                     |
-| `POST`                 | `/api/auth/cadastrar` | cadastra as credenciais de paciente ou médico |
-| `GET`                  | `/api/medicos`        | lista médicos                                 |
-| `GET`, `PUT`, `DELETE` | `/api/medicos/{id}`   | busca, edita ou exclui médico                 |
-| `GET`                  | `/api/pacientes`      | lista pacientes                               |
-| `GET`, `PUT`, `DELETE` | `/api/pacientes/{id}` | busca, edita ou exclui paciente               |
+| Método                 | Rota                           | Descrição                                     |
+| ---------------------- | ------------------------------ | --------------------------------------------- |
+| `POST`                 | `/api/auth/login`              | autentica e devolve o token JWT               |
+| `POST`                 | `/api/auth/cadastrar`          | cadastra as credenciais de paciente ou médico |
+| `GET`                  | `/api/medicos`                 | lista médicos                                 |
+| `GET`, `PUT`, `DELETE` | `/api/medicos/{id}`            | busca, edita ou exclui médico                 |
+| `GET`                  | `/api/pacientes`               | lista pacientes                               |
+| `GET`, `PUT`, `DELETE` | `/api/pacientes/{id}`          | busca, edita ou exclui paciente               |
+| `GET`                  | `/api/consultas`               | lista consultas                               |
+| `POST`                 | `/api/consultas`               | agenda uma consulta e gera sua conta          |
+| `GET`, `PUT`, `DELETE` | `/api/consultas/{id}`          | busca, edita ou exclui consulta               |
+| `POST`                 | `/api/consultas/{id}/realizar` | marca uma consulta como realizada             |
+| `POST`                 | `/api/consultas/{id}/cancelar` | cancela uma consulta                          |
+| `GET`                  | `/api/planos`                  | lista os planos disponíveis                   |
+| `GET`                  | `/api/especialidades`          | lista as especialidades disponíveis           |
+| `GET`                  | `/api/contas`                  | lista contas                                  |
+| `GET`, `DELETE`        | `/api/contas/{id}`             | busca ou exclui conta                         |
+| `POST`                 | `/api/contas/{id}/pagar`       | marca uma conta como paga                     |

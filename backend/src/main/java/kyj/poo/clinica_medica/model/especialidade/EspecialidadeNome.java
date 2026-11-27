@@ -2,7 +2,6 @@ package kyj.poo.clinica_medica.model.especialidade;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -31,13 +30,14 @@ public enum EspecialidadeNome {
         String nome = valor.trim();
 
         return Arrays.stream(values())
-                .filter(especialidade -> especialidade.nome.equalsIgnoreCase(nome))
-                .findFirst();
+            .filter(especialidade -> especialidade.nome.equalsIgnoreCase(nome))
+            .findFirst();
     }
 
     @JsonCreator
     public static EspecialidadeNome fromJson(String valor) {
-        return fromNome(valor)
-                .orElseThrow(() -> new IllegalArgumentException("Especialidade inválida."));
+        return fromNome(valor).orElseThrow(() ->
+            new IllegalArgumentException("Especialidade inválida.")
+        );
     }
 }

@@ -1,16 +1,13 @@
 package kyj.poo.clinica_medica.model;
 
 import jakarta.persistence.*;
-
-import kyj.poo.clinica_medica.model.especialidade.Especialidade;
-
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import kyj.poo.clinica_medica.model.especialidade.Especialidade;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -18,25 +15,28 @@ import java.util.List;
 @NoArgsConstructor
 public class Medico extends Usuario {
 
-    @ManyToOne private Especialidade especialidade;
+    @ManyToOne
+    private Especialidade especialidade;
 
     private BigDecimal valorConsultaParticular;
 
     @ManyToMany
     @JoinTable(
-            name = "medico_plano",
-            joinColumns = @JoinColumn(name = "medico_id"),
-            inverseJoinColumns = @JoinColumn(name = "plano_id"))
+        name = "medico_plano",
+        joinColumns = @JoinColumn(name = "medico_id"),
+        inverseJoinColumns = @JoinColumn(name = "plano_id")
+    )
     private List<Plano> planosAceitos = new ArrayList<>();
 
     @OneToMany(mappedBy = "medico")
     private List<Avaliacao> avaliacoes = new ArrayList<>();
 
     public Medico(
-            String nome,
-            String email,
-            Especialidade especialidade,
-            BigDecimal valorConsultaParticular) {
+        String nome,
+        String email,
+        Especialidade especialidade,
+        BigDecimal valorConsultaParticular
+    ) {
         super(nome, email);
         this.especialidade = especialidade;
         this.valorConsultaParticular = valorConsultaParticular;

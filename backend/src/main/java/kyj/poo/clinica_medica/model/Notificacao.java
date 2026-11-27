@@ -1,12 +1,10 @@
 package kyj.poo.clinica_medica.model;
 
 import jakarta.persistence.*;
-
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -18,7 +16,8 @@ public class Notificacao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne private Paciente paciente;
+    @ManyToOne
+    private Paciente paciente;
 
     private String mensagem;
 

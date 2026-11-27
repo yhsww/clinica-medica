@@ -4,20 +4,23 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import kyj.poo.clinica_medica.model.Credencial;
-
 import org.junit.jupiter.api.Test;
 
 class AuthServiceTest {
 
-    private final CredencialService credencialService = mock(CredencialService.class);
+    private final CredencialService credencialService = mock(
+        CredencialService.class
+    );
     private final PacienteService pacienteService = mock(PacienteService.class);
     private final MedicoService medicoService = mock(MedicoService.class);
-    private final AuthService authService =
-            new AuthService(credencialService, pacienteService, medicoService);
+    private final AuthService authService = new AuthService(
+        credencialService,
+        pacienteService,
+        medicoService
+    );
 
     @Test
     void deveAutenticarComCredenciaisValidas() {
-
         String email = "teste@email.com";
         String senha = "123456";
 
@@ -39,15 +42,15 @@ class AuthServiceTest {
 
     @Test
     void deveRejeitarCredenciaisInvalidas() {
-
         String email = "teste@email.com";
         String senha = "senhaErrada";
 
         when(credencialService.autenticar(email, senha)).thenReturn(false);
 
-        IllegalArgumentException exception =
-                assertThrows(
-                        IllegalArgumentException.class, () -> authService.autenticar(email, senha));
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> authService.autenticar(email, senha)
+        );
 
         assertEquals("E-mail ou senha inválidos.", exception.getMessage());
 

@@ -1,12 +1,10 @@
 package kyj.poo.clinica_medica.model;
 
 import jakarta.persistence.*;
-
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -18,16 +16,23 @@ public class ListaDeEspera {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne private Medico medico;
+    @ManyToOne
+    private Medico medico;
 
-    @ManyToOne private Paciente paciente;
+    @ManyToOne
+    private Paciente paciente;
 
     @Column(name = "data")
     private LocalDateTime dataHora;
 
     private Integer posicao;
 
-    public ListaDeEspera(Medico medico, Paciente paciente, LocalDateTime dataHora, Integer posicao) {
+    public ListaDeEspera(
+        Medico medico,
+        Paciente paciente,
+        LocalDateTime dataHora,
+        Integer posicao
+    ) {
         this.medico = medico;
         this.paciente = paciente;
         this.dataHora = dataHora;

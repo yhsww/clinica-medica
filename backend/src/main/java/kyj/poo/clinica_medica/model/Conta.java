@@ -1,12 +1,10 @@
 package kyj.poo.clinica_medica.model;
 
 import jakarta.persistence.*;
-
+import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -18,7 +16,8 @@ public class Conta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne private Consulta consulta;
+    @OneToOne
+    private Consulta consulta;
 
     private BigDecimal valor;
 

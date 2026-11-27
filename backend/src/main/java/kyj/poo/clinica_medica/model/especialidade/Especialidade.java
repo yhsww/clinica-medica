@@ -1,12 +1,10 @@
 package kyj.poo.clinica_medica.model.especialidade;
 
 import jakarta.persistence.*;
-
+import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.math.BigDecimal;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)

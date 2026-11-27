@@ -1,7 +1,6 @@
 package kyj.poo.clinica_medica.model.especialidade;
 
 import jakarta.persistence.Entity;
-
 import java.math.BigDecimal;
 
 @Entity

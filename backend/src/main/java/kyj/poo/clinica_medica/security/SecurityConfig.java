@@ -10,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -20,10 +21,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final CredencialUserDetailsService userDetailsService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(CredencialUserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
@@ -97,15 +98,48 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(
                         "/api/auth/**",
-                        "/api/medicos",
-                        "/api/medicos/**",
-                        "/api/pacientes",
-                        "/api/pacientes/**",
+                        "/api/planos",
+                        "/api/especialidades",
                         "/login",
                         "/error",
                         "/h2-console/**"
                     )
                     .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/consultas")
+                    .hasAnyRole("ADMIN", "PACIENTE")
+                    .requestMatchers(
+                        HttpMethod.POST,
+                        "/api/consultas/*/cancelar"
+                    )
+                    .hasAnyRole("ADMIN", "PACIENTE", "MEDICO")
+                    .requestMatchers(
+                        HttpMethod.POST,
+                        "/api/consultas/*/realizar"
+                    )
+                    .hasAnyRole("ADMIN", "MEDICO")
+                    .requestMatchers(
+                        HttpMethod.GET,
+                        "/api/medicos",
+                        "/api/medicos/**",
+                        "/api/pacientes",
+                        "/api/pacientes/**",
+                        "/api/consultas",
+                        "/api/consultas/**",
+                        "/api/contas",
+                        "/api/contas/**"
+                    )
+                    .authenticated()
+                    .requestMatchers(
+                        "/api/medicos",
+                        "/api/medicos/**",
+                        "/api/pacientes",
+                        "/api/pacientes/**",
+                        "/api/consultas",
+                        "/api/consultas/**",
+                        "/api/contas",
+                        "/api/contas/**"
+                    )
+                    .hasRole("ADMIN")
                     .requestMatchers("/admin/**")
                     .hasRole("ADMIN")
                     .requestMatchers("/medico/**")
@@ -117,6 +151,10 @@ public class SecurityConfig {
             )
             .logout(logout ->
                 logout.logoutSuccessUrl("/login?logout").permitAll()
+            )
+            .addFilterBefore(
+                jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class
             );
 
         return http.build();

@@ -1,13 +1,11 @@
 package kyj.poo.clinica_medica.model;
 
 import jakarta.persistence.*;
-
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -19,9 +17,11 @@ public class Consulta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne private Medico medico;
+    @ManyToOne
+    private Medico medico;
 
-    @ManyToOne private Paciente paciente;
+    @ManyToOne
+    private Paciente paciente;
 
     @Column(name = "data")
     private LocalDateTime dataHora;
@@ -31,7 +31,12 @@ public class Consulta {
 
     private BigDecimal valorCobrado;
 
-    public Consulta(Medico medico, Paciente paciente, LocalDateTime dataHora, BigDecimal valorCobrado) {
+    public Consulta(
+        Medico medico,
+        Paciente paciente,
+        LocalDateTime dataHora,
+        BigDecimal valorCobrado
+    ) {
         this.medico = medico;
         this.paciente = paciente;
         this.dataHora = dataHora;

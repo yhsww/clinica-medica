@@ -1,7 +1,8 @@
-export type Papel = 'paciente' | 'medico' | 'admin'
+export type Papel = "paciente" | "medico" | "admin";
 
 export type Usuario = {
-  nome: string
-  email: string
-  papel: Papel
-}
+  id: number;
+  nome: string;
+  email: string;
+  papel: Papel;
+};

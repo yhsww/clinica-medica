@@ -1,5 +1,9 @@
 package kyj.poo.clinica_medica.config;
 
+import java.math.BigDecimal;
+import java.util.List;
+import kyj.poo.clinica_medica.model.Consulta;
+import kyj.poo.clinica_medica.model.Conta;
 import kyj.poo.clinica_medica.model.Medico;
 import kyj.poo.clinica_medica.model.Paciente;
 import kyj.poo.clinica_medica.model.Papel;
@@ -10,16 +14,14 @@ import kyj.poo.clinica_medica.model.especialidade.ClinicoGeral;
 import kyj.poo.clinica_medica.model.especialidade.Dermatologia;
 import kyj.poo.clinica_medica.model.especialidade.Especialidade;
 import kyj.poo.clinica_medica.model.especialidade.Pediatria;
+import kyj.poo.clinica_medica.repository.ConsultaRepository;
+import kyj.poo.clinica_medica.repository.ContaRepository;
 import kyj.poo.clinica_medica.repository.CredencialRepository;
 import kyj.poo.clinica_medica.repository.EspecialidadeRepository;
 import kyj.poo.clinica_medica.repository.MedicoRepository;
 import kyj.poo.clinica_medica.repository.PacienteRepository;
 import kyj.poo.clinica_medica.repository.PlanoRepository;
 import kyj.poo.clinica_medica.service.CredencialService;
-
-import java.math.BigDecimal;
-import java.util.List;
-
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,58 +33,113 @@ public class DataLoader {
     @Bean
     @Order(1)
     CommandLineRunner carregarMocks(
-            PacienteRepository pacienteRepository,
-            MedicoRepository medicoRepository,
-            CredencialRepository credencialRepository,
-            EspecialidadeRepository especialidadeRepository,
-            PlanoRepository planoRepository,
-            CredencialService credencialService) {
-
+        PacienteRepository pacienteRepository,
+        MedicoRepository medicoRepository,
+        CredencialRepository credencialRepository,
+        EspecialidadeRepository especialidadeRepository,
+        PlanoRepository planoRepository,
+        CredencialService credencialService
+    ) {
         return args -> {
-            criarAdmin(pacienteRepository, credencialRepository, credencialService);
+            criarAdmin(
+                pacienteRepository,
+                credencialRepository,
+                credencialService
+            );
 
             for (PlanoNome plano : PlanoNome.values()) {
                 resolverPlano(planoRepository, plano.getNome());
             }
 
-            Especialidade cardiologia =
-                    resolverEspecialidade(especialidadeRepository, new Cardiologia());
-            Especialidade dermatologia =
-                    resolverEspecialidade(especialidadeRepository, new Dermatologia());
+            Especialidade cardiologia = resolverEspecialidade(
+                especialidadeRepository,
+                new Cardiologia()
+            );
+            Especialidade dermatologia = resolverEspecialidade(
+                especialidadeRepository,
+                new Dermatologia()
+            );
             resolverEspecialidade(especialidadeRepository, new ClinicoGeral());
             resolverEspecialidade(especialidadeRepository, new Pediatria());
 
-            criarMedico(medicoRepository, credencialRepository, credencialService,
-                    "Dr. Carlos Lima", "medico@clinica.com", new BigDecimal("250.00"), cardiologia);
-            criarMedico(medicoRepository, credencialRepository, credencialService,
-                    "Dra. Ana Paula", "ana@clinica.com", new BigDecimal("300.00"), dermatologia);
+            criarMedico(
+                medicoRepository,
+                credencialRepository,
+                credencialService,
+                "Dr. Carlos Lima",
+                "medico@clinica.com",
+                new BigDecimal("250.00"),
+                cardiologia
+            );
+            criarMedico(
+                medicoRepository,
+                credencialRepository,
+                credencialService,
+                "Dra. Ana Paula",
+                "ana@clinica.com",
+                new BigDecimal("300.00"),
+                dermatologia
+            );
 
-            criarPaciente(pacienteRepository, credencialRepository, credencialService,
-                    "Maria Silva", "paciente@clinica.com", 34, Papel.PACIENTE);
-            criarPaciente(pacienteRepository, credencialRepository, credencialService,
-                    "João Pereira", "joao@clinica.com", 28, Papel.PACIENTE);
+            criarPaciente(
+                pacienteRepository,
+                credencialRepository,
+                credencialService,
+                "Maria Silva",
+                "paciente@clinica.com",
+                34,
+                Papel.PACIENTE
+            );
+            criarPaciente(
+                pacienteRepository,
+                credencialRepository,
+                credencialService,
+                "João Pereira",
+                "joao@clinica.com",
+                28,
+                Papel.PACIENTE
+            );
+        };
+    }
+
+    @Bean
+    @Order(2)
+    CommandLineRunner criarContasFaltantes(
+        ConsultaRepository consultaRepository,
+        ContaRepository contaRepository
+    ) {
+        return args -> {
+            for (Consulta consulta : consultaRepository.findAll()) {
+                if (contaRepository.findByConsulta(consulta).isPresent()) {
+                    continue;
+                }
+
+                Conta conta = new Conta(consulta, consulta.getValorCobrado());
+                contaRepository.save(conta);
+            }
         };
     }
 
     private Especialidade resolverEspecialidade(
-            EspecialidadeRepository especialidadeRepository, Especialidade especialidade) {
-
+        EspecialidadeRepository especialidadeRepository,
+        Especialidade especialidade
+    ) {
         return especialidadeRepository
-                .findByNomeIgnoreCase(especialidade.getNome())
-                .orElseGet(() -> especialidadeRepository.save(especialidade));
+            .findByNomeIgnoreCase(especialidade.getNome())
+            .orElseGet(() -> especialidadeRepository.save(especialidade));
     }
 
     private Plano resolverPlano(PlanoRepository planoRepository, String nome) {
         return planoRepository
-                .findByNomeIgnoreCase(nome)
-                .orElseGet(() -> planoRepository.save(new Plano(nome)));
+            .findByNomeIgnoreCase(nome)
+            .orElseGet(() -> planoRepository.save(new Plano(nome)));
     }
 
     private void criarAdmin(
-            PacienteRepository pacienteRepository,
-            CredencialRepository credencialRepository,
-            CredencialService credencialService) {
-
+        PacienteRepository pacienteRepository,
+        CredencialRepository credencialRepository,
+        CredencialService credencialService
+    ) {
         String email = "admin@clinica.com";
 
         if (credencialRepository.existsByUsuario_Email(email)) {
@@ -100,14 +157,14 @@ public class DataLoader {
     }
 
     private void criarMedico(
-            MedicoRepository medicoRepository,
-            CredencialRepository credencialRepository,
-            CredencialService credencialService,
-            String nome,
-            String email,
-            BigDecimal valor,
-            Especialidade especialidade) {
-
+        MedicoRepository medicoRepository,
+        CredencialRepository credencialRepository,
+        CredencialService credencialService,
+        String nome,
+        String email,
+        BigDecimal valor,
+        Especialidade especialidade
+    ) {
         List<Medico> existentes = medicoRepository.findByEmail(email);
 
         if (existentes.isEmpty()) {
@@ -133,14 +190,14 @@ public class DataLoader {
     }
 
     private void criarPaciente(
-            PacienteRepository pacienteRepository,
-            CredencialRepository credencialRepository,
-            CredencialService credencialService,
-            String nome,
-            String email,
-            Integer idade,
-            Papel papel) {
-
+        PacienteRepository pacienteRepository,
+        CredencialRepository credencialRepository,
+        CredencialService credencialService,
+        String nome,
+        String email,
+        Integer idade,
+        Papel papel
+    ) {
         if (credencialRepository.existsByUsuario_Email(email)) {
             return;
         }
