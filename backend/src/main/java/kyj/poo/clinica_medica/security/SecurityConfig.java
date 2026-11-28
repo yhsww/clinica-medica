@@ -80,6 +80,10 @@ public class SecurityConfig {
     ) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
+            // O console do H2 usa frames; permite frames só do próprio site
+            .headers(headers ->
+                headers.frameOptions(frame -> frame.sameOrigin())
+            )
             .sessionManagement(sm ->
                 sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
