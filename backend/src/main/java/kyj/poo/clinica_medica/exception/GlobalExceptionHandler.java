@@ -47,6 +47,13 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(AcessoNegadoException.class)
+    public ResponseEntity<ErroResponse> acessoNegadoProprio(
+        AcessoNegadoException ex
+    ) {
+        return resposta(HttpStatus.FORBIDDEN, "Acesso negado", ex.getMessage());
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErroResponse> argumentoInvalido(
         IllegalArgumentException ex

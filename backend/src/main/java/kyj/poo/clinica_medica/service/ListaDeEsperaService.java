@@ -75,6 +75,16 @@ public class ListaDeEsperaService {
         return buscarFilaDoDia(medico, data);
     }
 
+    /** Todas as entradas do paciente em listas de espera, por data. */
+    public List<ListaDeEspera> listarPorPaciente(Paciente paciente) {
+        if (paciente == null) {
+            throw new IllegalArgumentException("O paciente é obrigatório.");
+        }
+        return listaDeEsperaRepository.findByPacienteOrderByDataHoraAsc(
+            paciente
+        );
+    }
+
     public ListaDeEspera primeiroDaFila(Medico medico, LocalDate data) {
         List<ListaDeEspera> fila = listar(medico, data);
         if (fila.isEmpty()) {

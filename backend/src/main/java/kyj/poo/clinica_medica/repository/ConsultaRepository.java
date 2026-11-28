@@ -25,4 +25,10 @@ public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
     boolean existsByMedico_Id(Long medicoId);
 
     boolean existsByPaciente_Id(Long pacienteId);
+
+    List<Consulta> findByPacienteOrderByDataHoraDesc(Paciente paciente);
+
+    List<Consulta> findByMedicoOrderByDataHoraDesc(Medico medico);
+
+    boolean existsByMedicoAndPaciente(Medico medico, Paciente paciente);
 }

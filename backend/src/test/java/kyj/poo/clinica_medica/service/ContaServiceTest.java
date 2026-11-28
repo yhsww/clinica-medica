@@ -5,11 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import kyj.poo.clinica_medica.exception.OperacaoInvalidaException;
 import kyj.poo.clinica_medica.model.Conta;
 import kyj.poo.clinica_medica.model.Medico;
 import kyj.poo.clinica_medica.model.Paciente;
@@ -34,6 +37,20 @@ class ContaServiceTest {
         Conta paga = servico.pagar(10L);
 
         assertTrue(paga.isPaga());
+    }
+
+    @Test
+    void naoDevePagarContaJaPaga() {
+        Conta conta = new Conta(null, new BigDecimal("100.00"));
+        conta.setId(5L);
+        conta.setPaga(true);
+
+        when(contaRepository.findById(5L)).thenReturn(Optional.of(conta));
+
+        assertThrows(OperacaoInvalidaException.class, () ->
+            servico.pagar(5L)
+        );
+        verify(contaRepository, never()).save(any());
     }
 
     @Test

@@ -5,6 +5,9 @@ import java.math.BigDecimal;
 public record ContaDTO(
     Long id,
     Long consultaId,
+    Long pacienteId,
+    String pacienteNome,
     BigDecimal valor,
-    boolean paga
+    boolean paga,
+    String situacao
 ) {}

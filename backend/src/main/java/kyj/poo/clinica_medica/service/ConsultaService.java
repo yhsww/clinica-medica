@@ -45,6 +45,22 @@ public class ConsultaService {
         return consultaRepository.findAll();
     }
 
+    public List<Consulta> listarPorPaciente(Paciente paciente) {
+        if (paciente == null) {
+            throw new IllegalArgumentException("O paciente é obrigatório.");
+        }
+
+        return consultaRepository.findByPacienteOrderByDataHoraDesc(paciente);
+    }
+
+    public List<Consulta> listarPorMedico(Medico medico) {
+        if (medico == null) {
+            throw new IllegalArgumentException("O médico é obrigatório.");
+        }
+
+        return consultaRepository.findByMedicoOrderByDataHoraDesc(medico);
+    }
+
     @Transactional(noRollbackFor = AgendamentoIndisponivelException.class)
     public Consulta criar(ConsultaRequest request) {
         validarRequest(request);
@@ -62,7 +78,19 @@ public class ConsultaService {
         return consulta;
     }
 
+    /**
+     * Gera a conta apenas quando há valor a pagar (paciente sem plano aceito
+     * pelo médico). Pacientes cobertos pelo plano não pagam (§7).
+     */
     private void criarConta(Consulta consulta) {
+        if (
+            consulta == null ||
+            consulta.getValorCobrado() == null ||
+            consulta.getValorCobrado().signum() <= 0
+        ) {
+            return;
+        }
+
         Conta conta = new Conta(consulta, consulta.getValorCobrado());
         contaRepository.save(conta);
     }
@@ -89,6 +117,10 @@ public class ConsultaService {
         consultaRepository.delete(consulta);
     }
 
+    /**
+     * Tudo numa única transação: se qualquer passo falhar, nada é gravado
+     * (cancelamento, remoção da conta, promoção da fila e nova conta).
+     */
     @Transactional
     public Consulta cancelar(Long consultaId) {
         Consulta consulta = buscarPorId(consultaId);
@@ -103,10 +135,16 @@ public class ConsultaService {
 
         Consulta consultaCancelada = consultaRepository.save(consulta);
 
-        listaDeEsperaService.promoverPrimeiroDaFila(
+        contaRepository
+            .findByConsulta(consulta)
+            .filter(conta -> !conta.isPaga())
+            .ifPresent(contaRepository::delete);
+
+        Consulta promovida = listaDeEsperaService.promoverPrimeiroDaFila(
             consulta.getMedico(),
             consulta.getDataHora().toLocalDate()
         );
+        criarConta(promovida);
 
         return consultaCancelada;
     }
@@ -154,6 +192,15 @@ public class ConsultaService {
         }
 
         return consulta.getMedico().equals(medico);
+    }
+
+    /** Médico "autorizado a atender" o paciente = já tem consulta com ele. */
+    public boolean medicoAtendePaciente(Medico medico, Paciente paciente) {
+        if (medico == null || paciente == null) {
+            return false;
+        }
+
+        return consultaRepository.existsByMedicoAndPaciente(medico, paciente);
     }
 
     private void validarRequest(ConsultaRequest request) {

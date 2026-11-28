@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import kyj.poo.clinica_medica.model.Consulta;
 import kyj.poo.clinica_medica.model.Conta;
+import kyj.poo.clinica_medica.model.EstadoDaConsulta;
 import kyj.poo.clinica_medica.model.Medico;
 import kyj.poo.clinica_medica.model.Paciente;
 import kyj.poo.clinica_medica.model.Papel;
@@ -51,6 +52,8 @@ public class DataLoader {
                 resolverPlano(planoRepository, plano.getNome());
             }
 
+            Plano sus = resolverPlano(planoRepository, PlanoNome.SUS.getNome());
+
             Especialidade cardiologia = resolverEspecialidade(
                 especialidadeRepository,
                 new Cardiologia()
@@ -62,6 +65,7 @@ public class DataLoader {
             resolverEspecialidade(especialidadeRepository, new ClinicoGeral());
             resolverEspecialidade(especialidadeRepository, new Pediatria());
 
+            // Cardiologista atende SUS; dermatologista só particular
             criarMedico(
                 medicoRepository,
                 credencialRepository,
@@ -69,7 +73,8 @@ public class DataLoader {
                 "Dr. Carlos Lima",
                 "medico@clinica.com",
                 new BigDecimal("250.00"),
-                cardiologia
+                cardiologia,
+                List.of(sus)
             );
             criarMedico(
                 medicoRepository,
@@ -78,7 +83,8 @@ public class DataLoader {
                 "Dra. Ana Paula",
                 "ana@clinica.com",
                 new BigDecimal("300.00"),
-                dermatologia
+                dermatologia,
+                List.of()
             );
 
             criarPaciente(
@@ -102,6 +108,10 @@ public class DataLoader {
         };
     }
 
+    /**
+     * Garante conta para consultas antigas que deveriam ter uma: não
+     * canceladas e com valor a pagar.
+     */
     @Bean
     @Order(2)
     CommandLineRunner criarContasFaltantes(
@@ -110,7 +120,12 @@ public class DataLoader {
     ) {
         return args -> {
             for (Consulta consulta : consultaRepository.findAll()) {
-                if (contaRepository.findByConsulta(consulta).isPresent()) {
+                if (
+                    consulta.getEstado() == EstadoDaConsulta.CANCELADA ||
+                    consulta.getValorCobrado() == null ||
+                    consulta.getValorCobrado().signum() <= 0 ||
+                    contaRepository.findByConsulta(consulta).isPresent()
+                ) {
                     continue;
                 }
 
@@ -163,7 +178,8 @@ public class DataLoader {
         String nome,
         String email,
         BigDecimal valor,
-        Especialidade especialidade
+        Especialidade especialidade,
+        List<Plano> planosAceitos
     ) {
         List<Medico> existentes = medicoRepository.findByEmail(email);
 
@@ -173,6 +189,7 @@ public class DataLoader {
             medico.setEmail(email);
             medico.setEspecialidade(especialidade);
             medico.setValorConsultaParticular(valor);
+            planosAceitos.forEach(medico::adicionarPlanoAceito);
             medicoRepository.save(medico);
 
             if (!credencialRepository.existsByUsuario_Email(email)) {
@@ -182,8 +199,20 @@ public class DataLoader {
         }
 
         for (Medico medico : existentes) {
+            boolean alterado = false;
+
             if (medico.getEspecialidade() == null) {
                 medico.setEspecialidade(especialidade);
+                alterado = true;
+            }
+
+            // Bancos criados antes desta versão: aplica os planos padrão
+            if (medico.getPlanosAceitos().isEmpty() && !planosAceitos.isEmpty()) {
+                planosAceitos.forEach(medico::adicionarPlanoAceito);
+                alterado = true;
+            }
+
+            if (alterado) {
                 medicoRepository.save(medico);
             }
         }

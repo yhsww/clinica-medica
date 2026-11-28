@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import kyj.poo.clinica_medica.model.ListaDeEspera;
 import kyj.poo.clinica_medica.model.Medico;
+import kyj.poo.clinica_medica.model.Paciente;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ListaDeEsperaRepository
@@ -14,4 +15,6 @@ public interface ListaDeEsperaRepository
         LocalDateTime inicio,
         LocalDateTime fim
     );
+
+    List<ListaDeEspera> findByPacienteOrderByDataHoraAsc(Paciente paciente);
 }

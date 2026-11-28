@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import kyj.poo.clinica_medica.dto.PacienteDTO;
 import kyj.poo.clinica_medica.dto.PacienteRequest;
+import kyj.poo.clinica_medica.exception.OperacaoInvalidaException;
 import kyj.poo.clinica_medica.model.Paciente;
 import kyj.poo.clinica_medica.service.PacienteService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +44,34 @@ public class PacienteController {
             .collect(Collectors.toList());
 
         return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<PacienteDTO> meusDados(Authentication autenticacao) {
+        return ResponseEntity.ok(
+            toDto(pacienteService.buscarPorEmail(autenticacao.getName()))
+        );
+    }
+
+    /** O paciente altera apenas os próprios dados; o e-mail (login) não muda. */
+    @PutMapping("/me")
+    public ResponseEntity<PacienteDTO> atualizarMeusDados(
+        @Valid @RequestBody PacienteRequest request,
+        Authentication autenticacao
+    ) {
+        Paciente paciente = pacienteService.buscarPorEmail(
+            autenticacao.getName()
+        );
+
+        if (!paciente.getEmail().equalsIgnoreCase(request.email().trim())) {
+            throw new OperacaoInvalidaException(
+                "Não é permitido alterar o e-mail de login."
+            );
+        }
+
+        return ResponseEntity.ok(
+            toDto(pacienteService.atualizar(paciente.getId(), request))
+        );
     }
 
     @GetMapping("/{id}")

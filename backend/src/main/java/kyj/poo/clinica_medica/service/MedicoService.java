@@ -8,12 +8,14 @@ import kyj.poo.clinica_medica.exception.RecursoNaoEncontradoException;
 import kyj.poo.clinica_medica.model.Avaliacao;
 import kyj.poo.clinica_medica.model.Medico;
 import kyj.poo.clinica_medica.model.Plano;
+import kyj.poo.clinica_medica.model.PlanoNome;
 import kyj.poo.clinica_medica.model.especialidade.Especialidade;
 import kyj.poo.clinica_medica.repository.AvaliacaoRepository;
 import kyj.poo.clinica_medica.repository.ConsultaRepository;
 import kyj.poo.clinica_medica.repository.CredencialRepository;
 import kyj.poo.clinica_medica.repository.EspecialidadeRepository;
 import kyj.poo.clinica_medica.repository.MedicoRepository;
+import kyj.poo.clinica_medica.repository.PlanoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,19 +27,22 @@ public class MedicoService {
     private final EspecialidadeRepository especialidadeRepository;
     private final CredencialRepository credencialRepository;
     private final ConsultaRepository consultaRepository;
+    private final PlanoRepository planoRepository;
 
     public MedicoService(
         MedicoRepository medicoRepository,
         AvaliacaoRepository avaliacaoRepository,
         EspecialidadeRepository especialidadeRepository,
         CredencialRepository credencialRepository,
-        ConsultaRepository consultaRepository
+        ConsultaRepository consultaRepository,
+        PlanoRepository planoRepository
     ) {
         this.medicoRepository = medicoRepository;
         this.avaliacaoRepository = avaliacaoRepository;
         this.especialidadeRepository = especialidadeRepository;
         this.credencialRepository = credencialRepository;
         this.consultaRepository = consultaRepository;
+        this.planoRepository = planoRepository;
     }
 
     @Transactional
@@ -77,6 +82,14 @@ public class MedicoService {
             resolverEspecialidade(request.especialidade().getNome())
         );
         medico.setValorConsultaParticular(request.valorConsultaParticular());
+
+        // null = manter os planos atuais
+        if (request.planosAceitos() != null) {
+            medico.getPlanosAceitos().clear();
+            for (PlanoNome planoNome : request.planosAceitos()) {
+                medico.adicionarPlanoAceito(resolverPlano(planoNome.getNome()));
+            }
+        }
     }
 
     private Especialidade resolverEspecialidade(String nome) {
@@ -84,6 +97,14 @@ public class MedicoService {
             .findByNomeIgnoreCase(nome.trim())
             .orElseThrow(() ->
                 new OperacaoInvalidaException("Especialidade inválida: " + nome)
+            );
+    }
+
+    private Plano resolverPlano(String nome) {
+        return planoRepository
+            .findByNomeIgnoreCase(nome.trim())
+            .orElseThrow(() ->
+                new OperacaoInvalidaException("Plano inválido: " + nome)
             );
     }
 
@@ -123,6 +144,20 @@ public class MedicoService {
 
         return medicoRepository
             .findById(id)
+            .orElseThrow(() ->
+                new RecursoNaoEncontradoException("Médico não encontrado.")
+            );
+    }
+
+    public Medico buscarPorEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("O e-mail é obrigatório.");
+        }
+
+        return medicoRepository
+            .findByEmail(email)
+            .stream()
+            .findFirst()
             .orElseThrow(() ->
                 new RecursoNaoEncontradoException("Médico não encontrado.")
             );
@@ -169,6 +204,20 @@ public class MedicoService {
         return medicoRepository.findAll();
     }
 
+    /**
+     * Pesquisa por nome e/ou nome da especialidade (ex.: "Pediatria").
+     * Tem nome diferente de buscar(...) para não gerar ambiguidade em
+     * chamadas como buscar(nome, null).
+     */
+    public List<Medico> pesquisar(String nome, String especialidadeNome) {
+        Especialidade especialidade =
+            especialidadeNome == null || especialidadeNome.isBlank()
+                ? null
+                : resolverEspecialidade(especialidadeNome);
+
+        return buscar(nome, especialidade);
+    }
+
     public List<Medico> buscarPorPlano(Plano plano) {
         if (plano == null) {
             throw new IllegalArgumentException("O plano é obrigatório.");
@@ -201,5 +250,17 @@ public class MedicoService {
             .mapToInt(Avaliacao::getEstrelas)
             .average()
             .orElse(0.0);
+    }
+
+    public List<Avaliacao> listarAvaliacoesRecentes(Medico medico, int limite) {
+        if (medico == null) {
+            throw new IllegalArgumentException("O médico é obrigatório.");
+        }
+
+        return avaliacaoRepository
+            .findByMedicoOrderByIdDesc(medico)
+            .stream()
+            .limit(limite)
+            .toList();
     }
 }

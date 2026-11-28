@@ -8,6 +8,7 @@ import kyj.poo.clinica_medica.dto.ConsultaDTO;
 import kyj.poo.clinica_medica.dto.ConsultaRequest;
 import kyj.poo.clinica_medica.model.Consulta;
 import kyj.poo.clinica_medica.service.ConsultaService;
+import kyj.poo.clinica_medica.service.MedicoService;
 import kyj.poo.clinica_medica.service.PacienteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -27,13 +28,16 @@ public class ConsultaController {
 
     private final ConsultaService consultaService;
     private final PacienteService pacienteService;
+    private final MedicoService medicoService;
 
     public ConsultaController(
         ConsultaService consultaService,
-        PacienteService pacienteService
+        PacienteService pacienteService,
+        MedicoService medicoService
     ) {
         this.consultaService = consultaService;
         this.pacienteService = pacienteService;
+        this.medicoService = medicoService;
     }
 
     @GetMapping
@@ -45,6 +49,30 @@ public class ConsultaController {
             .collect(Collectors.toList());
 
         return ResponseEntity.ok(dtos);
+    }
+
+    /** Consultas do usuário logado (paciente ou médico); admin vê todas. */
+    @GetMapping("/minhas")
+    public ResponseEntity<List<ConsultaDTO>> minhas(
+        Authentication autenticacao
+    ) {
+        List<Consulta> consultas;
+
+        if (temPapel(autenticacao, "ADMIN")) {
+            consultas = consultaService.listarTodos();
+        } else if (temPapel(autenticacao, "MEDICO")) {
+            consultas = consultaService.listarPorMedico(
+                medicoService.buscarPorEmail(autenticacao.getName())
+            );
+        } else {
+            consultas = consultaService.listarPorPaciente(
+                pacienteService.buscarPorEmail(autenticacao.getName())
+            );
+        }
+
+        return ResponseEntity.ok(
+            consultas.stream().map(this::toDto).collect(Collectors.toList())
+        );
     }
 
     @GetMapping("/{id}")

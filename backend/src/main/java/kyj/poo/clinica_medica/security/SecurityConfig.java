@@ -117,6 +117,20 @@ public class SecurityConfig {
                         "/api/consultas/*/realizar"
                     )
                     .hasAnyRole("ADMIN", "MEDICO")
+                    // Cada usuário altera apenas os próprios dados (§4)
+                    .requestMatchers(HttpMethod.PUT, "/api/pacientes/me")
+                    .hasRole("PACIENTE")
+                    .requestMatchers(HttpMethod.PUT, "/api/medicos/me")
+                    .hasRole("MEDICO")
+                    // Paciente paga a própria conta (§9)
+                    .requestMatchers(HttpMethod.POST, "/api/contas/*/pagar")
+                    .hasAnyRole("ADMIN", "PACIENTE")
+                    // Paciente avalia a consulta realizada (§10)
+                    .requestMatchers(HttpMethod.POST, "/api/avaliacoes")
+                    .hasRole("PACIENTE")
+                    // Médico registra o prontuário (§7)
+                    .requestMatchers(HttpMethod.POST, "/api/prontuarios")
+                    .hasAnyRole("ADMIN", "MEDICO")
                     .requestMatchers(
                         HttpMethod.GET,
                         "/api/medicos",

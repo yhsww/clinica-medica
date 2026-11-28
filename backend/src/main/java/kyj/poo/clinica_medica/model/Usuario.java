@@ -28,4 +28,22 @@ public abstract class Usuario {
         this.nome = nome;
         this.email = email;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (!(o instanceof Usuario outro)) {
+            return false;
+        }
+
+        return getId() != null && getId().equals(outro.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

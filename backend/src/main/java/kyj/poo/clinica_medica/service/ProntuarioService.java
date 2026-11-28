@@ -1,5 +1,7 @@
 package kyj.poo.clinica_medica.service;
 
+import java.util.Comparator;
+import java.util.List;
 import kyj.poo.clinica_medica.exception.AcessoNegadoException;
 import kyj.poo.clinica_medica.exception.OperacaoInvalidaException;
 import kyj.poo.clinica_medica.exception.RecursoNaoEncontradoException;
@@ -72,6 +74,23 @@ public class ProntuarioService {
                     "Prontuário não encontrado para esta consulta."
                 )
             );
+    }
+
+    /** Histórico do paciente, da consulta mais recente para a mais antiga. */
+    public List<Prontuario> listarHistorico(Paciente paciente) {
+        if (paciente == null) {
+            throw new IllegalArgumentException("O paciente é obrigatório.");
+        }
+
+        return prontuarioRepository
+            .findByConsulta_Paciente(paciente)
+            .stream()
+            .sorted(
+                Comparator.comparing((Prontuario p) ->
+                    p.getConsulta().getDataHora()
+                ).reversed()
+            )
+            .toList();
     }
 
     public Prontuario buscarParaPaciente(Consulta consulta, Paciente paciente) {

@@ -3,6 +3,7 @@ package kyj.poo.clinica_medica.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import kyj.poo.clinica_medica.dto.ConsultaRequest;
+import kyj.poo.clinica_medica.exception.OperacaoInvalidaException;
 import kyj.poo.clinica_medica.model.Consulta;
 import kyj.poo.clinica_medica.model.Conta;
 import kyj.poo.clinica_medica.model.EstadoDaConsulta;
@@ -100,5 +102,47 @@ class ConsultaServiceTest {
         assertSame(consulta, conta.getConsulta());
         assertEquals(valor, conta.getValor());
         assertFalse(conta.isPaga());
+    }
+
+    @Test
+    void naoDeveCriarContaParaConsultaCobertaPeloPlano() {
+        Medico medico = mock(Medico.class);
+        Paciente paciente = mock(Paciente.class);
+        LocalDateTime dataHora = LocalDate.now().plusDays(1).atTime(9, 0);
+
+        Consulta consulta = new Consulta(
+            medico,
+            paciente,
+            dataHora,
+            BigDecimal.ZERO
+        );
+
+        when(medicoService.buscarPorId(1L)).thenReturn(medico);
+        when(pacienteService.buscarPorId(2L)).thenReturn(paciente);
+        when(agendamentoService.agendar(medico, paciente, dataHora)).thenReturn(
+            consulta
+        );
+
+        service.criar(new ConsultaRequest(1L, 2L, dataHora));
+
+        verify(contaRepository, never()).save(any());
+    }
+
+    @Test
+    void naoDeveRealizarConsultaCancelada() {
+        Consulta consulta = new Consulta(
+            null,
+            null,
+            LocalDate.now().atTime(9, 0),
+            BigDecimal.TEN
+        );
+        consulta.setEstado(EstadoDaConsulta.CANCELADA);
+
+        when(consultaRepository.findById(3L)).thenReturn(Optional.of(consulta));
+
+        assertThrows(OperacaoInvalidaException.class, () ->
+            service.realizar(3L)
+        );
+        verify(consultaRepository, never()).save(any());
     }
 }

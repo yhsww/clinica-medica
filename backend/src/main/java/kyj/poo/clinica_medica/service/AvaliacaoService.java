@@ -1,5 +1,6 @@
 package kyj.poo.clinica_medica.service;
 
+import java.util.List;
 import kyj.poo.clinica_medica.exception.OperacaoInvalidaException;
 import kyj.poo.clinica_medica.exception.RecursoNaoEncontradoException;
 import kyj.poo.clinica_medica.model.Avaliacao;
@@ -72,6 +73,15 @@ public class AvaliacaoService {
                     "Esta consulta ainda não possui avaliação."
                 )
             );
+    }
+
+    /** Avaliações do médico, das mais recentes para as mais antigas. */
+    public List<Avaliacao> listarPorMedico(Medico medico) {
+        if (medico == null) {
+            throw new IllegalArgumentException("O médico é obrigatório.");
+        }
+
+        return avaliacaoRepository.findByMedicoOrderByIdDesc(medico);
     }
 
     private void validarDados(

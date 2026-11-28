@@ -1,6 +1,7 @@
 package kyj.poo.clinica_medica.service;
 
 import java.util.List;
+import kyj.poo.clinica_medica.exception.OperacaoInvalidaException;
 import kyj.poo.clinica_medica.exception.RecursoNaoEncontradoException;
 import kyj.poo.clinica_medica.model.Conta;
 import kyj.poo.clinica_medica.model.Medico;
@@ -75,6 +76,11 @@ public class ContaService {
     @Transactional
     public Conta pagar(Long contaId) {
         Conta conta = buscarPorId(contaId);
+
+        if (conta.isPaga()) {
+            throw new OperacaoInvalidaException("Esta conta já foi paga.");
+        }
+
         conta.setPaga(true);
 
         return contaRepository.save(conta);

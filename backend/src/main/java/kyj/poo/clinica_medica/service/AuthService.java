@@ -1,5 +1,6 @@
 package kyj.poo.clinica_medica.service;
 
+import java.util.List;
 import kyj.poo.clinica_medica.dto.CadastroRequest;
 import kyj.poo.clinica_medica.dto.MedicoRequest;
 import kyj.poo.clinica_medica.dto.PacienteRequest;
@@ -66,7 +67,8 @@ public class AuthService {
                     request.nome(),
                     request.email(),
                     request.especialidade(),
-                    request.valorConsultaParticular()
+                    request.valorConsultaParticular(),
+                    List.of()
                 )
             );
             papel = Papel.MEDICO;

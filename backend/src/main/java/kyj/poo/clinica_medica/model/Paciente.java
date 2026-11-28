@@ -31,4 +31,15 @@ public class Paciente extends Usuario {
         this.idade = idade;
         this.planoSaude = planoSaude;
     }
+
+    /**
+     * "Particular" equivale a "não tenho plano": o paciente paga a consulta
+     * e pode ver todos os médicos.
+     */
+    public boolean possuiPlanoDeSaude() {
+        return (
+            planoSaude != null &&
+            !PlanoNome.PARTICULAR.getNome().equalsIgnoreCase(planoSaude.getNome())
+        );
+    }
 }

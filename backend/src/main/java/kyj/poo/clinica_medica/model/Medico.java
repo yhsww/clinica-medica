@@ -20,7 +20,7 @@ public class Medico extends Usuario {
 
     private BigDecimal valorConsultaParticular;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "medico_plano",
         joinColumns = @JoinColumn(name = "medico_id"),
