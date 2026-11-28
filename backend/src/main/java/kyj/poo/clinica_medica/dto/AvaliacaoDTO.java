@@ -1,5 +1,6 @@
 package kyj.poo.clinica_medica.dto;
 
+import java.time.LocalDateTime;
 import kyj.poo.clinica_medica.model.Avaliacao;
 
 public record AvaliacaoDTO(
@@ -9,7 +10,8 @@ public record AvaliacaoDTO(
     String medicoNome,
     String pacienteNome,
     Integer estrelas,
-    String comentario
+    String comentario,
+    LocalDateTime dataHora
 ) {
     public static AvaliacaoDTO de(Avaliacao avaliacao) {
         return new AvaliacaoDTO(
@@ -25,7 +27,8 @@ public record AvaliacaoDTO(
                 ? avaliacao.getPaciente().getNome()
                 : null,
             avaliacao.getEstrelas(),
-            avaliacao.getComentario()
+            avaliacao.getComentario(),
+            avaliacao.getDataHora()
         );
     }
 }

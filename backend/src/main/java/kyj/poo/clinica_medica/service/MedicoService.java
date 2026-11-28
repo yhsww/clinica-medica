@@ -258,7 +258,7 @@ public class MedicoService {
         }
 
         return avaliacaoRepository
-            .findByMedicoOrderByIdDesc(medico)
+            .findByMedicoOrderByDataHoraDescIdDesc(medico)
             .stream()
             .limit(limite)
             .toList();

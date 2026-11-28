@@ -146,11 +146,11 @@ public class ListaDeEsperaService {
                     inicio,
                     fim
                 )
-                .filter(
+                .stream()
+                .anyMatch(
                     consulta ->
                         consulta.getEstado() == EstadoDaConsulta.AGENDADA
-                )
-                .isPresent();
+                );
 
             if (jaPossuiConsulta) {
                 listaDeEsperaRepository.delete(entrada);

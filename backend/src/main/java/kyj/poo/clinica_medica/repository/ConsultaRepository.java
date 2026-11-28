@@ -2,7 +2,6 @@ package kyj.poo.clinica_medica.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import kyj.poo.clinica_medica.model.Consulta;
 import kyj.poo.clinica_medica.model.Medico;
 import kyj.poo.clinica_medica.model.Paciente;
@@ -15,7 +14,8 @@ public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
         LocalDateTime fim
     );
 
-    Optional<Consulta> findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(
+    // List (e não Optional): pode haver consultas canceladas no mesmo dia
+    List<Consulta> findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(
         Medico medico,
         Paciente paciente,
         LocalDateTime inicio,

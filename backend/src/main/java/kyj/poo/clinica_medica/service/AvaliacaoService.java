@@ -81,7 +81,7 @@ public class AvaliacaoService {
             throw new IllegalArgumentException("O médico é obrigatório.");
         }
 
-        return avaliacaoRepository.findByMedicoOrderByIdDesc(medico);
+        return avaliacaoRepository.findByMedicoOrderByDataHoraDescIdDesc(medico);
     }
 
     private void validarDados(

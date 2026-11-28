@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import kyj.poo.clinica_medica.exception.AgendamentoIndisponivelException;
+import kyj.poo.clinica_medica.exception.OperacaoInvalidaException;
 import kyj.poo.clinica_medica.model.Consulta;
 import kyj.poo.clinica_medica.model.EstadoDaConsulta;
 import kyj.poo.clinica_medica.model.ListaDeEspera;
@@ -38,42 +39,13 @@ public class AgendamentoService {
     ) {
         validarDados(medico, paciente, dataHora);
 
-        LocalDate data = dataHora.toLocalDate();
-        LocalDateTime inicio = data.atStartOfDay();
-        LocalDateTime fim = data.plusDays(1).atStartOfDay();
-
-        boolean jaAgendado = consultaRepository
-            .findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(
-                medico,
-                paciente,
-                inicio,
-                fim
-            )
-            .filter(
-                consulta -> consulta.getEstado() == EstadoDaConsulta.AGENDADA
-            )
-            .isPresent();
-
-        if (jaAgendado) {
+        if (possuiConsultaAgendada(medico, paciente, dataHora, null)) {
             throw new AgendamentoIndisponivelException(
                 "O paciente já possui uma consulta agendada com este médico nessa data."
             );
         }
 
-        List<Consulta> consultasDoDia =
-            consultaRepository.findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThan(
-                medico,
-                inicio,
-                fim
-            );
-
-        long consultasAtivas = consultasDoDia
-            .stream()
-            .filter(
-                consulta -> consulta.getEstado() == EstadoDaConsulta.AGENDADA
-            )
-            .count();
-
+        long consultasAtivas = contarConsultasAgendadas(medico, dataHora, null);
         int limite = medico.getEspecialidade().getLimiteConsultasPorDia();
 
         if (consultasAtivas >= limite) {
@@ -87,6 +59,99 @@ public class AgendamentoService {
         BigDecimal valor = calcularValorConsulta(medico, paciente);
         Consulta consulta = new Consulta(medico, paciente, dataHora, valor);
         return consultaRepository.save(consulta);
+    }
+
+    /**
+     * Remarca uma consulta AGENDADA aplicando as mesmas regras do
+     * agendamento (data, duplicidade e limite diário), sem contar a própria
+     * consulta. Não usa lista de espera: se o dia estiver lotado, recusa.
+     */
+    @Transactional
+    public Consulta remarcar(
+        Consulta consulta,
+        Medico medico,
+        Paciente paciente,
+        LocalDateTime dataHora
+    ) {
+        if (consulta == null) {
+            throw new IllegalArgumentException("A consulta é obrigatória.");
+        }
+
+        if (consulta.getEstado() != EstadoDaConsulta.AGENDADA) {
+            throw new OperacaoInvalidaException(
+                "Somente consultas agendadas podem ser alteradas."
+            );
+        }
+
+        validarDados(medico, paciente, dataHora);
+
+        if (possuiConsultaAgendada(medico, paciente, dataHora, consulta.getId())) {
+            throw new AgendamentoIndisponivelException(
+                "O paciente já possui uma consulta agendada com este médico nessa data."
+            );
+        }
+
+        long consultasAtivas = contarConsultasAgendadas(
+            medico,
+            dataHora,
+            consulta.getId()
+        );
+
+        if (consultasAtivas >= medico.getEspecialidade().getLimiteConsultasPorDia()) {
+            throw new AgendamentoIndisponivelException(
+                "Não há vagas para este médico nessa data."
+            );
+        }
+
+        consulta.setMedico(medico);
+        consulta.setPaciente(paciente);
+        consulta.setDataHora(dataHora);
+        consulta.setValorCobrado(calcularValorConsulta(medico, paciente));
+
+        return consultaRepository.save(consulta);
+    }
+
+    private boolean possuiConsultaAgendada(
+        Medico medico,
+        Paciente paciente,
+        LocalDateTime dataHora,
+        Long ignorarConsultaId
+    ) {
+        LocalDate data = dataHora.toLocalDate();
+
+        return consultaRepository
+            .findByMedicoAndPacienteAndDataHoraGreaterThanEqualAndDataHoraLessThan(
+                medico,
+                paciente,
+                data.atStartOfDay(),
+                data.plusDays(1).atStartOfDay()
+            )
+            .stream()
+            .filter(consulta -> ignorarConsultaId == null || !ignorarConsultaId.equals(consulta.getId()))
+            .anyMatch(
+                consulta -> consulta.getEstado() == EstadoDaConsulta.AGENDADA
+            );
+    }
+
+    private long contarConsultasAgendadas(
+        Medico medico,
+        LocalDateTime dataHora,
+        Long ignorarConsultaId
+    ) {
+        LocalDate data = dataHora.toLocalDate();
+
+        return consultaRepository
+            .findByMedicoAndDataHoraGreaterThanEqualAndDataHoraLessThan(
+                medico,
+                data.atStartOfDay(),
+                data.plusDays(1).atStartOfDay()
+            )
+            .stream()
+            .filter(consulta -> ignorarConsultaId == null || !ignorarConsultaId.equals(consulta.getId()))
+            .filter(
+                consulta -> consulta.getEstado() == EstadoDaConsulta.AGENDADA
+            )
+            .count();
     }
 
     private void adicionarNaListaDeEspera(

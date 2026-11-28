@@ -1,6 +1,7 @@
 package kyj.poo.clinica_medica.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,6 +30,9 @@ public class Avaliacao {
 
     private String comentario;
 
+    /** Momento em que a avaliação foi registrada. */
+    private LocalDateTime dataHora;
+
     public Avaliacao(
         Medico medico,
         Paciente paciente,
@@ -41,5 +45,6 @@ public class Avaliacao {
         this.consulta = consulta;
         this.estrelas = estrelas;
         this.comentario = comentario;
+        this.dataHora = LocalDateTime.now();
     }
 }

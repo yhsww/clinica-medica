@@ -10,5 +10,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AvaliacaoRepository extends JpaRepository<Avaliacao, Long> {
     Optional<Avaliacao> findByConsulta(Consulta consulta);
 
-    List<Avaliacao> findByMedicoOrderByIdDesc(Medico medico);
+    List<Avaliacao> findByMedicoOrderByDataHoraDescIdDesc(Medico medico);
 }

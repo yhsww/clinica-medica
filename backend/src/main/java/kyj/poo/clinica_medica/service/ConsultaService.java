@@ -95,16 +95,35 @@ public class ConsultaService {
         contaRepository.save(conta);
     }
 
+    /**
+     * Remarca a consulta com as mesmas regras do agendamento e recalcula a
+     * conta pendente (o valor pode mudar com outro médico ou paciente).
+     */
     @Transactional
     public Consulta atualizar(Long id, ConsultaRequest request) {
         validarRequest(request);
 
         Consulta consulta = buscarPorId(id);
-        consulta.setMedico(medicoService.buscarPorId(request.medicoId()));
-        consulta.setPaciente(pacienteService.buscarPorId(request.pacienteId()));
-        consulta.setDataHora(request.dataHora());
+        Consulta remarcada = agendamentoService.remarcar(
+            consulta,
+            medicoService.buscarPorId(request.medicoId()),
+            pacienteService.buscarPorId(request.pacienteId()),
+            request.dataHora()
+        );
 
-        return consultaRepository.save(consulta);
+        boolean contaJaPaga = contaRepository
+            .findByConsulta(remarcada)
+            .map(Conta::isPaga)
+            .orElse(false);
+
+        if (!contaJaPaga) {
+            contaRepository
+                .findByConsulta(remarcada)
+                .ifPresent(contaRepository::delete);
+            criarConta(remarcada);
+        }
+
+        return remarcada;
     }
 
     /**

@@ -98,12 +98,16 @@ public class EstatisticaService {
             );
     }
 
+    /**
+     * "Procura" = demanda: conta todas as consultas marcadas (agendadas ou
+     * realizadas). Canceladas ficam de fora porque não ocuparam a agenda.
+     */
     public Optional<Especialidade> especialidadeMaisProcurada() {
         Map<Especialidade, Long> quantidadePorEspecialidade = consultaRepository
             .findAll()
             .stream()
             .filter(
-                consulta -> consulta.getEstado() == EstadoDaConsulta.REALIZADA
+                consulta -> consulta.getEstado() != EstadoDaConsulta.CANCELADA
             )
             .filter(
                 consulta ->
