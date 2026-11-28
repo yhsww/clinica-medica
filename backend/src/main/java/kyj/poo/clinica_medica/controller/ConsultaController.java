@@ -41,14 +41,10 @@ public class ConsultaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ConsultaDTO>> listar() {
-        List<ConsultaDTO> dtos = consultaService
-            .listarTodos()
-            .stream()
-            .map(this::toDto)
-            .collect(Collectors.toList());
-
-        return ResponseEntity.ok(dtos);
+    public ResponseEntity<List<ConsultaDTO>> listar(
+        Authentication autenticacao
+    ) {
+        return minhas(autenticacao);
     }
 
     /** Consultas do usuário logado (paciente ou médico); admin vê todas. */
@@ -76,7 +72,11 @@ public class ConsultaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ConsultaDTO> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<ConsultaDTO> buscarPorId(
+        @PathVariable Long id,
+        Authentication autenticacao
+    ) {
+        verificarPropriedade(id, autenticacao);
         return ResponseEntity.ok(toDto(consultaService.buscarPorId(id)));
     }
 

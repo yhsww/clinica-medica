@@ -8,8 +8,13 @@ import kyj.poo.clinica_medica.dto.PacienteDTO;
 import kyj.poo.clinica_medica.dto.PacienteRequest;
 import kyj.poo.clinica_medica.exception.OperacaoInvalidaException;
 import kyj.poo.clinica_medica.model.Paciente;
+import kyj.poo.clinica_medica.model.Papel;
+import kyj.poo.clinica_medica.security.UsuarioAutenticado;
+import kyj.poo.clinica_medica.service.ConsultaService;
+import kyj.poo.clinica_medica.service.MedicoService;
 import kyj.poo.clinica_medica.service.PacienteService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,9 +30,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class PacienteController {
 
     private final PacienteService pacienteService;
+    private final ConsultaService consultaService;
+    private final MedicoService medicoService;
 
-    public PacienteController(PacienteService pacienteService) {
+    public PacienteController(
+        PacienteService pacienteService,
+        ConsultaService consultaService,
+        MedicoService medicoService
+    ) {
         this.pacienteService = pacienteService;
+        this.consultaService = consultaService;
+        this.medicoService = medicoService;
     }
 
     @GetMapping
@@ -74,9 +87,42 @@ public class PacienteController {
         );
     }
 
+    /** Admin, o próprio paciente ou um médico que o atende. */
     @GetMapping("/{id}")
-    public ResponseEntity<PacienteDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(toDto(pacienteService.buscarPorId(id)));
+    public ResponseEntity<PacienteDTO> buscarPorId(
+        @PathVariable Long id,
+        Authentication autenticacao
+    ) {
+        Paciente paciente = pacienteService.buscarPorId(id);
+        verificarAcesso(paciente, autenticacao);
+        return ResponseEntity.ok(toDto(paciente));
+    }
+
+    private void verificarAcesso(Paciente paciente, Authentication autenticacao) {
+        if (UsuarioAutenticado.temPapel(autenticacao, Papel.ADMIN)) {
+            return;
+        }
+
+        if (
+            UsuarioAutenticado.temPapel(autenticacao, Papel.PACIENTE) &&
+            paciente.getEmail().equalsIgnoreCase(autenticacao.getName())
+        ) {
+            return;
+        }
+
+        if (
+            UsuarioAutenticado.temPapel(autenticacao, Papel.MEDICO) &&
+            consultaService.medicoAtendePaciente(
+                medicoService.buscarPorEmail(autenticacao.getName()),
+                paciente
+            )
+        ) {
+            return;
+        }
+
+        throw new AccessDeniedException(
+            "Você não tem acesso aos dados deste paciente."
+        );
     }
 
     @PostMapping

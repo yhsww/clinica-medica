@@ -3,11 +3,13 @@ package kyj.poo.clinica_medica.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 import kyj.poo.clinica_medica.dto.ContaDTO;
+import kyj.poo.clinica_medica.model.Consulta;
 import kyj.poo.clinica_medica.model.Conta;
 import kyj.poo.clinica_medica.model.Paciente;
 import kyj.poo.clinica_medica.model.Papel;
 import kyj.poo.clinica_medica.security.UsuarioAutenticado;
 import kyj.poo.clinica_medica.service.ContaService;
+import kyj.poo.clinica_medica.service.MedicoService;
 import kyj.poo.clinica_medica.service.PacienteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -26,24 +28,38 @@ public class ContaController {
 
     private final ContaService contaService;
     private final PacienteService pacienteService;
+    private final MedicoService medicoService;
 
     public ContaController(
         ContaService contaService,
-        PacienteService pacienteService
+        PacienteService pacienteService,
+        MedicoService medicoService
     ) {
         this.contaService = contaService;
         this.pacienteService = pacienteService;
+        this.medicoService = medicoService;
     }
 
+    /** Admin vê todas; médico vê as das suas consultas; paciente, as próprias. */
     @GetMapping
-    public ResponseEntity<List<ContaDTO>> listar() {
-        List<ContaDTO> dtos = contaService
-            .listarTodos()
-            .stream()
-            .map(this::toDto)
-            .collect(Collectors.toList());
+    public ResponseEntity<List<ContaDTO>> listar(Authentication autenticacao) {
+        List<Conta> contas;
 
-        return ResponseEntity.ok(dtos);
+        if (UsuarioAutenticado.temPapel(autenticacao, Papel.ADMIN)) {
+            contas = contaService.listarTodos();
+        } else if (UsuarioAutenticado.temPapel(autenticacao, Papel.MEDICO)) {
+            contas = contaService.listarPorMedico(
+                medicoService.buscarPorEmail(autenticacao.getName())
+            );
+        } else {
+            contas = contaService.listarPorPaciente(
+                pacienteService.buscarPorEmail(autenticacao.getName())
+            );
+        }
+
+        return ResponseEntity.ok(
+            contas.stream().map(this::toDto).collect(Collectors.toList())
+        );
     }
 
     /** Contas do paciente logado. situacao = PENDENTE, PAGA ou vazio (todas). */
@@ -71,8 +87,38 @@ public class ContaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ContaDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(toDto(contaService.buscarPorId(id)));
+    public ResponseEntity<ContaDTO> buscarPorId(
+        @PathVariable Long id,
+        Authentication autenticacao
+    ) {
+        Conta conta = contaService.buscarPorId(id);
+        verificarAcesso(conta, autenticacao);
+        return ResponseEntity.ok(toDto(conta));
+    }
+
+    private void verificarAcesso(Conta conta, Authentication autenticacao) {
+        if (UsuarioAutenticado.temPapel(autenticacao, Papel.ADMIN)) {
+            return;
+        }
+
+        Consulta consulta = conta.getConsulta();
+        String email = autenticacao.getName();
+
+        boolean doPaciente =
+            UsuarioAutenticado.temPapel(autenticacao, Papel.PACIENTE) &&
+            consulta != null &&
+            consulta.getPaciente() != null &&
+            email.equalsIgnoreCase(consulta.getPaciente().getEmail());
+
+        boolean doMedico =
+            UsuarioAutenticado.temPapel(autenticacao, Papel.MEDICO) &&
+            consulta != null &&
+            consulta.getMedico() != null &&
+            email.equalsIgnoreCase(consulta.getMedico().getEmail());
+
+        if (!doPaciente && !doMedico) {
+            throw new AccessDeniedException("Esta conta não pertence ao usuário.");
+        }
     }
 
     @DeleteMapping("/{id}")

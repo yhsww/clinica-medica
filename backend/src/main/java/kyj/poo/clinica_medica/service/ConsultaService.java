@@ -107,9 +107,19 @@ public class ConsultaService {
         return consultaRepository.save(consulta);
     }
 
+    /**
+     * Consultas realizadas fazem parte do histórico do paciente (prontuário,
+     * avaliação, conta) e não podem ser apagadas (§12).
+     */
     @Transactional
     public void excluir(Long id) {
         Consulta consulta = buscarPorId(id);
+
+        if (consulta.getEstado() == EstadoDaConsulta.REALIZADA) {
+            throw new OperacaoInvalidaException(
+                "Não é possível excluir uma consulta realizada: ela faz parte do histórico do paciente."
+            );
+        }
 
         contaRepository
             .findByConsulta(consulta)

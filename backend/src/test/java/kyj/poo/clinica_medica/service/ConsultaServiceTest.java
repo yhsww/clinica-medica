@@ -145,4 +145,44 @@ class ConsultaServiceTest {
         );
         verify(consultaRepository, never()).save(any());
     }
+
+    @Test
+    void naoDeveExcluirConsultaRealizada() {
+        Consulta consulta = new Consulta(
+            null,
+            null,
+            LocalDate.now().atTime(9, 0),
+            BigDecimal.TEN
+        );
+        consulta.setEstado(EstadoDaConsulta.REALIZADA);
+
+        when(consultaRepository.findById(4L)).thenReturn(Optional.of(consulta));
+
+        assertThrows(OperacaoInvalidaException.class, () ->
+            service.excluir(4L)
+        );
+        verify(consultaRepository, never()).delete(any());
+        verify(contaRepository, never()).delete(any());
+    }
+
+    @Test
+    void deveExcluirConsultaAgendadaJuntoComAConta() {
+        Consulta consulta = new Consulta(
+            null,
+            null,
+            LocalDate.now().plusDays(1).atTime(9, 0),
+            BigDecimal.TEN
+        );
+        Conta conta = new Conta(consulta, BigDecimal.TEN);
+
+        when(consultaRepository.findById(5L)).thenReturn(Optional.of(consulta));
+        when(contaRepository.findByConsulta(consulta)).thenReturn(
+            Optional.of(conta)
+        );
+
+        service.excluir(5L);
+
+        verify(contaRepository).delete(conta);
+        verify(consultaRepository).delete(consulta);
+    }
 }

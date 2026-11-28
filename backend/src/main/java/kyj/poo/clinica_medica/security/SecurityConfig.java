@@ -131,6 +131,9 @@ public class SecurityConfig {
                     // Médico registra o prontuário (§7)
                     .requestMatchers(HttpMethod.POST, "/api/prontuarios")
                     .hasAnyRole("ADMIN", "MEDICO")
+                    // Lista completa de pacientes só para o admin
+                    .requestMatchers(HttpMethod.GET, "/api/pacientes")
+                    .hasRole("ADMIN")
                     .requestMatchers(
                         HttpMethod.GET,
                         "/api/medicos",
